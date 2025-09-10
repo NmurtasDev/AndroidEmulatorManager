@@ -10,5 +10,3 @@ The difference between version 1 and version 2 is where the SDK is saved. In ver
 All of this has been tested on Windows. If you like, you could send me a message with your impressions of this.
 I believe that V1 also works on Linux without any problems, as 
 If you like, you could send me a message with your impressions of this.
-
-Translated with DeepL.com (free version)
