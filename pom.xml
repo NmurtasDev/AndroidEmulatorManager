@@ -39,6 +39,10 @@
         <junit.version>5.10.1</junit.version>
         <slf4j.version>2.0.9</slf4j.version>
         <logback.version>1.5.19</logback.version>
+
+        <!-- Launch4j default properties -->
+        <bundled.jre.path></bundled.jre.path>
+        <exe.suffix></exe.suffix>
     </properties>
 
     <dependencies>
@@ -116,7 +120,7 @@
             <plugin>
                 <groupId>com.akathist.maven.plugins.launch4j</groupId>
                 <artifactId>launch4j-maven-plugin</artifactId>
-                <version>1.7.25</version>
+                <version>2.5.1</version>
                 <executions>
                     <execution>
                         <id>launch4j-exe</id>
@@ -124,22 +128,34 @@
                         <goals>
                             <goal>launch4j</goal>
                         </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>${project.build.directory}/${project.artifactId}-${project.version}${exe.suffix}.exe</outfile>
+                            <jar>${project.build.directory}/${project.artifactId}-${project.version}-jar-with-dependencies.jar</jar>
+                            <errTitle>Android Emulator Manager</errTitle>
+                            <classPath>
+                                <mainClass>net.nicolamurtas.android.emulator.AndroidEmulatorManager</mainClass>
+                            </classPath>
+                            <jre>
+                                <path>${bundled.jre.path}</path>
+                                <minVersion>21</minVersion>
+                                <requires64Bit>true</requires64Bit>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>3.0.0.0</fileVersion>
+                                <txtFileVersion>3.0.0-SNAPSHOT</txtFileVersion>
+                                <fileDescription>Android Emulator Manager</fileDescription>
+                                <copyright>MIT License - Nicola Murtas</copyright>
+                                <productVersion>3.0.0.0</productVersion>
+                                <txtProductVersion>3.0.0-SNAPSHOT</txtProductVersion>
+                                <productName>Android Emulator Manager</productName>
+                                <internalName>android-emulator-manager</internalName>
+                                <originalFilename>android-emulator-manager.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <outfile>${project.build.directory}/${project.artifactId}-${project.version}${exe.suffix}.exe</outfile>
-                    <jar>${project.build.directory}/${project.artifactId}-${project.version}-jar-with-dependencies.jar</jar>
-                    <mainClass>net.nicolamurtas.android.emulator.AndroidEmulatorManager</mainClass>
-                    <errTitle>Android Emulator Manager</errTitle>
-                    <chdir>.</chdir>
-                    <priority>normal</priority>
-                    <stayAlive>false</stayAlive>
-                    <restartOnCrash>false</restartOnCrash>
-                    <minVersion>21</minVersion>
-                    <bundledJrePath>${bundled.jre.path}</bundledJrePath>
-                    <bundledJre64Bit>true</bundledJre64Bit>
-                    <requires64Bit>true</requires64Bit>
-                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -1,5 +1,12 @@
 # Android Emulator Manager
 
+[![Java CI with Maven](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/maven.yml/badge.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/maven.yml)
+[![CodeQL](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/codeql.yml/badge.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Java Version](https://img.shields.io/badge/Java-21-blue.svg)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager)
+[![Version](https://img.shields.io/badge/version-3.0.0--SNAPSHOT-orange.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager/releases)
+
 A modern **Java-based GUI tool** to download, install, and manage Android SDK and emulators.
 
 ## Features
