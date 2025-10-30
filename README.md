@@ -58,6 +58,44 @@ jlink --output jre --add-modules java.base,java.desktop --strip-debug --compress
 mvn clean package -Pwindows-standalone
 ```
 
+### Build macOS App Bundle
+
+```bash
+git clone https://github.com/NmurtasDev/AndroidEmulatorManager.git
+cd AndroidEmulatorManager
+mvn clean package -Pmacos
+# Output: target/AndroidEmulatorManager.app/
+```
+
+### Build Linux App Bundle
+
+```bash
+git clone https://github.com/NmurtasDev/AndroidEmulatorManager.git
+cd AndroidEmulatorManager
+mvn clean package -Plinux
+# Output: target/AndroidEmulatorManager/ (executable: bin/AndroidEmulatorManager)
+```
+
+### Build Linux DEB Package
+
+```bash
+git clone https://github.com/NmurtasDev/AndroidEmulatorManager.git
+cd AndroidEmulatorManager
+mvn clean package -Plinux-deb
+# Output: target/android-emulator-manager_3.0.0_amd64.deb
+```
+
+## Platform-Specific Distributions
+
+| Platform | Profile | Output | Includes JRE |
+|----------|---------|--------|--------------|
+| **Windows** | `windows` | `.exe` (requires Java) | ❌ |
+| **Windows** | `windows-standalone` | `.exe` (standalone) | ✅ |
+| **macOS** | `macos` | `.app` bundle | ✅ |
+| **Linux** | `linux` | app-image | ✅ |
+| **Linux** | `linux-deb` | `.deb` package | ✅ |
+| **All** | default | `.jar` (universal) | ❌ |
+
 ## Usage
 
 1. **Launch the application**
