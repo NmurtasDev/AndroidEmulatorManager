@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -126,7 +127,7 @@ public class SdkDownloadService {
      */
     private void downloadFile(String urlString, Path outputPath,
                             BiConsumer<Integer, String> progressCallback) throws IOException {
-        URL url = new URL(urlString);
+        URL url = URI.create(urlString).toURL();
 
         try (InputStream in = url.openStream();
              FileOutputStream out = new FileOutputStream(outputPath.toFile())) {

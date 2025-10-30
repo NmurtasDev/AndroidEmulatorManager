@@ -3,6 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.nicolamurtas</groupId>
@@ -38,6 +39,10 @@
         <junit.version>5.10.1</junit.version>
         <slf4j.version>2.0.9</slf4j.version>
         <logback.version>1.5.19</logback.version>
+
+        <!-- Launch4j default properties -->
+        <bundled.jre.path></bundled.jre.path>
+        <exe.suffix></exe.suffix>
     </properties>
 
     <dependencies>
@@ -65,6 +70,7 @@
 
     <build>
         <plugins>
+
             <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -77,29 +83,14 @@
                 </configuration>
             </plugin>
 
-            <!-- Maven Surefire Plugin for tests -->
+            <!-- Maven Surefire Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.2</version>
             </plugin>
 
-            <!-- Maven Jar Plugin with Main-Class -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>net.nicolamurtas.android.emulator.AndroidEmulatorManager</mainClass>
-                            <addClasspath>true</addClasspath>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-
-            <!-- Maven Assembly Plugin for fat JAR -->
+            <!-- Fat JAR con dipendenze -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -124,6 +115,70 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Launch4j Plugin per EXE -->
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.5.1</version>
+                <executions>
+                    <execution>
+                        <id>launch4j-exe</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>${project.build.directory}/${project.artifactId}-${project.version}${exe.suffix}.exe</outfile>
+                            <jar>${project.build.directory}/${project.artifactId}-${project.version}-jar-with-dependencies.jar</jar>
+                            <errTitle>Android Emulator Manager</errTitle>
+                            <classPath>
+                                <mainClass>net.nicolamurtas.android.emulator.AndroidEmulatorManager</mainClass>
+                            </classPath>
+                            <jre>
+                                <path>${bundled.jre.path}</path>
+                                <minVersion>21</minVersion>
+                                <requires64Bit>true</requires64Bit>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>3.0.0.0</fileVersion>
+                                <txtFileVersion>3.0.0-SNAPSHOT</txtFileVersion>
+                                <fileDescription>Android Emulator Manager</fileDescription>
+                                <copyright>MIT License - Nicola Murtas</copyright>
+                                <productVersion>3.0.0.0</productVersion>
+                                <txtProductVersion>3.0.0-SNAPSHOT</txtProductVersion>
+                                <productName>Android Emulator Manager</productName>
+                                <internalName>android-emulator-manager</internalName>
+                                <originalFilename>android-emulator-manager.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <!-- Profili per EXE -->
+    <profiles>
+        <!-- Richiede JRE di sistema -->
+        <profile>
+            <id>windows</id>
+            <properties>
+                <bundled.jre.path></bundled.jre.path>
+                <exe.suffix></exe.suffix>
+            </properties>
+        </profile>
+
+        <!-- Include una JRE locale -->
+        <profile>
+            <id>windows-standalone</id>
+            <properties>
+                <bundled.jre.path>jre</bundled.jre.path>
+                <exe.suffix>-standalone</exe.suffix>
+            </properties>
+        </profile>
+    </profiles>
+
 </project>
