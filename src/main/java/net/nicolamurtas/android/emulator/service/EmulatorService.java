@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 /**
  * Service for managing Android Virtual Devices (AVDs) and emulators.
@@ -19,10 +20,12 @@ public class EmulatorService {
 
     private final Path sdkPath;
     private final Map<String, Process> runningEmulators;
+    private final SdkDownloadService sdkDownloadService;
 
     public EmulatorService(Path sdkPath) {
         this.sdkPath = sdkPath;
         this.runningEmulators = new ConcurrentHashMap<>();
+        this.sdkDownloadService = new SdkDownloadService();
     }
 
     /**
@@ -40,8 +43,52 @@ public class EmulatorService {
      */
     public boolean createAvd(String name, String apiLevel, String deviceType)
             throws IOException, InterruptedException {
+        return createAvd(name, apiLevel, deviceType, null);
+    }
+
+    /**
+     * Creates a new Android Virtual Device with auto-install support.
+     *
+     * @param name AVD name
+     * @param apiLevel API level (e.g., "33")
+     * @param deviceType Device type (e.g., "pixel_5")
+     * @param progressCallback Optional callback for installation progress
+     * @return true if creation was successful
+     */
+    public boolean createAvd(String name, String apiLevel, String deviceType,
+                            BiConsumer<Integer, String> progressCallback)
+            throws IOException, InterruptedException {
 
         logger.info("Creating AVD: name={}, api={}, device={}", name, apiLevel, deviceType);
+
+        // Check if API is installed, if not, install it
+        if (!sdkDownloadService.isApiLevelInstalled(sdkPath, apiLevel)) {
+            logger.info("API level {} not found, installing...", apiLevel);
+
+            if (progressCallback != null) {
+                progressCallback.accept(0, "Installing missing API " + apiLevel + "...");
+            }
+
+            List<String> componentsToInstall = List.of(
+                "platforms;android-" + apiLevel,
+                "system-images;android-" + apiLevel + ";google_apis;x86_64"
+            );
+
+            // Install missing components
+            for (String component : componentsToInstall) {
+                boolean success = sdkDownloadService.installSingleComponent(sdkPath, component);
+                if (!success) {
+                    logger.error("Failed to install component: {}", component);
+                    return false;
+                }
+            }
+
+            if (progressCallback != null) {
+                progressCallback.accept(100, "API " + apiLevel + " installed successfully");
+            }
+
+            logger.info("API level {} installed successfully", apiLevel);
+        }
 
         Path avdManagerPath = getAvdManagerPath();
         if (avdManagerPath == null) {

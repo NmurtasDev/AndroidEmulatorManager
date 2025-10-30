@@ -11,6 +11,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.*;
+import java.util.List;
 
 /**
  * Main application class for Android Emulator Manager.
@@ -204,13 +206,21 @@ public class AndroidEmulatorManager extends JFrame {
 
         Path sdkPath = Path.of(pathText);
 
+        // Show component selection dialog
+        List<String> selectedComponents = showSdkComponentSelectionDialog();
+        if (selectedComponents == null || selectedComponents.isEmpty()) {
+            log("SDK download cancelled by user");
+            return;
+        }
+
         new Thread(() -> {
             try {
                 showProgress(true);
                 log("=== Starting SDK Download ===");
                 log("Target path: " + sdkPath);
+                log("Selected components: " + selectedComponents.size());
 
-                sdkDownloadService.downloadAndInstallSdk(sdkPath, this::updateProgress);
+                sdkDownloadService.downloadAndInstallSdk(sdkPath, selectedComponents, this::updateProgress);
 
                 configService.setSdkPath(sdkPath);
                 configService.saveConfig();
@@ -231,6 +241,92 @@ public class AndroidEmulatorManager extends JFrame {
                 showProgress(false);
             }
         }).start();
+    }
+
+    private List<String> showSdkComponentSelectionDialog() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+
+        // Title
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        JLabel titleLabel = new JLabel("Select SDK Components to Install:");
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 14f));
+        panel.add(titleLabel, gbc);
+
+        // Essential components (always selected, disabled)
+        gbc.gridy++; gbc.gridwidth = 1;
+        JLabel essentialLabel = new JLabel("Essential Components (required):");
+        essentialLabel.setFont(essentialLabel.getFont().deriveFont(Font.BOLD));
+        panel.add(essentialLabel, gbc);
+
+        List<JCheckBox> essentialCheckboxes = new ArrayList<>();
+        String[] essentialComponents = {"platform-tools", "emulator", "build-tools;35.0.0"};
+        for (String component : essentialComponents) {
+            gbc.gridy++;
+            JCheckBox cb = new JCheckBox(component, true);
+            cb.setEnabled(false);
+            essentialCheckboxes.add(cb);
+            panel.add(cb, gbc);
+        }
+
+        // API levels
+        gbc.gridy++;
+        JLabel apiLabel = new JLabel("Android API Levels:");
+        apiLabel.setFont(apiLabel.getFont().deriveFont(Font.BOLD));
+        panel.add(apiLabel, gbc);
+
+        Map<String, JCheckBox> apiCheckboxes = new LinkedHashMap<>();
+        for (int api = 36; api >= 30; api--) {
+            gbc.gridy++;
+            JCheckBox platformCb = new JCheckBox("Android " + api + " (Platform + System Image)", api >= 34);
+            apiCheckboxes.put(String.valueOf(api), platformCb);
+            panel.add(platformCb, gbc);
+        }
+
+        // Select/Deselect all buttons
+        gbc.gridy++;
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton selectAllBtn = new JButton("Select All");
+        JButton deselectAllBtn = new JButton("Deselect All");
+
+        selectAllBtn.addActionListener(e ->
+            apiCheckboxes.values().forEach(cb -> cb.setSelected(true)));
+        deselectAllBtn.addActionListener(e ->
+            apiCheckboxes.values().forEach(cb -> cb.setSelected(false)));
+
+        buttonPanel.add(selectAllBtn);
+        buttonPanel.add(deselectAllBtn);
+        panel.add(buttonPanel, gbc);
+
+        // Show dialog
+        int result = JOptionPane.showConfirmDialog(this, new JScrollPane(panel),
+            "SDK Component Selection", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result != JOptionPane.OK_OPTION) {
+            return null;
+        }
+
+        // Build selected components list
+        List<String> selectedComponents = new ArrayList<>();
+
+        // Add essential components
+        selectedComponents.add("platform-tools");
+        selectedComponents.add("emulator");
+        selectedComponents.add("build-tools;35.0.0");
+
+        // Add selected APIs
+        for (Map.Entry<String, JCheckBox> entry : apiCheckboxes.entrySet()) {
+            if (entry.getValue().isSelected()) {
+                String api = entry.getKey();
+                selectedComponents.add("platforms;android-" + api);
+                selectedComponents.add("system-images;android-" + api + ";google_apis;x86_64");
+            }
+        }
+
+        return selectedComponents;
     }
 
     private void verifySdk() {
@@ -325,10 +421,15 @@ public class AndroidEmulatorManager extends JFrame {
                         (String) apiCombo.getSelectedItem();
 
                     log("Creating AVD: " + nameField.getText() + " (API " + selectedApi + ")");
+
+                    // Show progress bar for potential API installation
+                    showProgress(true);
+
                     boolean success = emulatorService.createAvd(
                         nameField.getText(),
                         selectedApi,
-                        (String) deviceCombo.getSelectedItem()
+                        (String) deviceCombo.getSelectedItem(),
+                        this::updateProgress
                     );
 
                     if (success) {
@@ -340,6 +441,8 @@ public class AndroidEmulatorManager extends JFrame {
                 } catch (Exception e) {
                     logger.error("Failed to create AVD", e);
                     log("ERROR: " + e.getMessage());
+                } finally {
+                    showProgress(false);
                 }
             }).start();
         }

@@ -10,6 +10,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.zip.ZipEntry;
@@ -42,7 +43,7 @@ public class SdkDownloadService {
     };
 
     /**
-     * Downloads and installs the Android SDK to the specified path.
+     * Downloads and installs the Android SDK to the specified path with default components.
      *
      * @param sdkPath Target SDK installation path
      * @param progressCallback Callback for progress updates (progress 0-100, message)
@@ -50,8 +51,22 @@ public class SdkDownloadService {
      */
     public void downloadAndInstallSdk(Path sdkPath, BiConsumer<Integer, String> progressCallback)
             throws IOException, InterruptedException {
+        downloadAndInstallSdk(sdkPath, List.of(SDK_COMPONENTS), progressCallback);
+    }
+
+    /**
+     * Downloads and installs the Android SDK to the specified path with custom components.
+     *
+     * @param sdkPath Target SDK installation path
+     * @param components List of SDK components to install
+     * @param progressCallback Callback for progress updates (progress 0-100, message)
+     * @throws IOException If download or extraction fails
+     */
+    public void downloadAndInstallSdk(Path sdkPath, List<String> components, BiConsumer<Integer, String> progressCallback)
+            throws IOException, InterruptedException {
 
         logger.info("Starting SDK download and installation to: {}", sdkPath);
+        logger.info("Components to install: {}", components);
 
         // Create SDK directory
         Files.createDirectories(sdkPath);
@@ -100,7 +115,7 @@ public class SdkDownloadService {
         logger.info("Installing SDK components...");
 
         // Install SDK components
-        installSdkComponents(sdkPath, progressCallback);
+        installSdkComponents(sdkPath, components, progressCallback);
 
         updateProgress(progressCallback, 100, "Completato!");
         logger.info("SDK installation completed successfully");
@@ -166,7 +181,7 @@ public class SdkDownloadService {
     /**
      * Installs SDK components using sdkmanager.
      */
-    private void installSdkComponents(Path sdkPath, BiConsumer<Integer, String> progressCallback)
+    private void installSdkComponents(Path sdkPath, List<String> components, BiConsumer<Integer, String> progressCallback)
             throws IOException, InterruptedException {
 
         Path sdkManagerPath = getSdkManagerPath(sdkPath);
@@ -201,9 +216,9 @@ public class SdkDownloadService {
 
         // Install each component
         int componentIndex = 0;
-        for (String component : SDK_COMPONENTS) {
+        for (String component : components) {
             logger.info("Installing component: {}", component);
-            int progress = 80 + (componentIndex * 15 / SDK_COMPONENTS.length);
+            int progress = 80 + (componentIndex * 15 / components.size());
             updateProgress(progressCallback, progress, "Installazione " + component + "...");
 
             ProcessExecutor.ExecutionResult result = ProcessExecutor.execute(
@@ -225,6 +240,68 @@ public class SdkDownloadService {
         }
 
         logger.info("SDK components installation completed");
+    }
+
+    /**
+     * Installs a single SDK component (for on-demand installation).
+     *
+     * @param sdkPath SDK installation path
+     * @param component Component to install (e.g., "platforms;android-35")
+     * @return true if installation was successful
+     */
+    public boolean installSingleComponent(Path sdkPath, String component)
+            throws IOException, InterruptedException {
+
+        logger.info("Installing single component: {}", component);
+
+        Path sdkManagerPath = getSdkManagerPath(sdkPath);
+        if (sdkManagerPath == null || !Files.exists(sdkManagerPath)) {
+            throw new IOException("sdkmanager not found in: " + sdkPath);
+        }
+
+        Map<String, String> env = Map.of(
+            "ANDROID_HOME", sdkPath.toString(),
+            "ANDROID_SDK_ROOT", sdkPath.toString()
+        );
+
+        ProcessExecutor.ExecutionResult result = ProcessExecutor.execute(
+            sdkPath,
+            env,
+            30,
+            null,
+            sdkManagerPath.toString(), component
+        );
+
+        if (result.isSuccess()) {
+            logger.info("Successfully installed: {}", component);
+            return true;
+        } else {
+            logger.error("Failed to install component: {}", component);
+            logger.error("Errors: {}", result.errors());
+            return false;
+        }
+    }
+
+    /**
+     * Checks if a specific API level is installed.
+     *
+     * @param sdkPath SDK installation path
+     * @param apiLevel API level to check (e.g., "35")
+     * @return true if both platform and system image are installed
+     */
+    public boolean isApiLevelInstalled(Path sdkPath, String apiLevel) {
+        Path platformPath = sdkPath.resolve("platforms").resolve("android-" + apiLevel);
+        Path systemImagePath = sdkPath.resolve("system-images")
+            .resolve("android-" + apiLevel)
+            .resolve("google_apis")
+            .resolve("x86_64");
+
+        boolean platformExists = Files.exists(platformPath);
+        boolean systemImageExists = Files.exists(systemImagePath);
+
+        logger.debug("API {} - Platform: {}, System Image: {}", apiLevel, platformExists, systemImageExists);
+
+        return platformExists && systemImageExists;
     }
 
     /**
