@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.androidemulatormanager.CommandExecutorTest
--------------------------------------------------------------------------------
-Tests run: 14, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 2.200 s -- in com.androidemulatormanager.CommandExecutorTest
