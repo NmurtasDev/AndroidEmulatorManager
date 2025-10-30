@@ -177,8 +177,11 @@ public class SdkManager {
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipPath.toFile()))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                Path entryPath = destPath.resolve(entry.getName());
-                
+                Path entryPath = destPath.resolve(entry.getName()).normalize();
+                // Zip Slip protection: ensure entryPath stays within destPath
+                if (!entryPath.startsWith(destPath.normalize())) {
+                    throw new IOException("Bad zip entry: " + entry.getName());
+                }
                 if (entry.isDirectory()) {
                     Files.createDirectories(entryPath);
                 } else {
