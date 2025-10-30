@@ -364,22 +364,29 @@ public class AndroidEmulatorManager extends JFrame {
             Path configIni = Path.of(avdPath).resolve("config.ini");
             if (Files.exists(configIni)) {
                 String content = Files.readString(configIni);
-                // Look for image.sysdir.1=system-images/android-35/google_apis/x86_64/
+                // Look for image.sysdir.1 = system-images/android-35/google_apis/x86_64/
                 for (String line : content.split("\n")) {
-                    if (line.startsWith("image.sysdir.1=")) {
-                        String sysdir = line.substring(15).trim();
-                        // Extract API number from: system-images/android-35/google_apis/x86_64/
-                        String[] parts = sysdir.split("/");
-                        for (String part : parts) {
-                            if (part.startsWith("android-")) {
-                                return part.substring(8); // Remove "android-" prefix
+                    line = line.trim();
+                    if (line.startsWith("image.sysdir.1")) {
+                        // Parse "image.sysdir.1 = system-images/android-35/google_apis/x86_64/"
+                        int equalPos = line.indexOf('=');
+                        if (equalPos > 0) {
+                            String sysdir = line.substring(equalPos + 1).trim();
+                            // Extract API number from: system-images/android-35/google_apis/x86_64/
+                            String[] parts = sysdir.split("/");
+                            for (String part : parts) {
+                                if (part.startsWith("android-")) {
+                                    String api = part.substring(8); // Remove "android-" prefix
+                                    logger.debug("Extracted API level {} from sysdir: {}", api, sysdir);
+                                    return api;
+                                }
                             }
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            logger.debug("Could not extract API level from path: {}", avdPath);
+            logger.debug("Could not extract API level from path: {}", avdPath, e);
         }
 
         return "Unknown";
@@ -448,17 +455,23 @@ public class AndroidEmulatorManager extends JFrame {
             Path configIni = Path.of(avdPath).resolve("config.ini");
             if (Files.exists(configIni)) {
                 String content = Files.readString(configIni);
-                // Look for hw.device.name=pixel_7
+                // Look for hw.device.name = pixel_7
                 for (String line : content.split("\n")) {
-                    if (line.startsWith("hw.device.name=")) {
-                        String deviceName = line.substring(15).trim();
-                        // Format device name: pixel_7 -> Pixel 7
-                        return formatDeviceName(deviceName);
+                    line = line.trim();
+                    if (line.startsWith("hw.device.name")) {
+                        // Parse "hw.device.name = pixel_7"
+                        int equalPos = line.indexOf('=');
+                        if (equalPos > 0) {
+                            String deviceName = line.substring(equalPos + 1).trim();
+                            // Format device name: pixel_7 -> Pixel 7
+                            logger.debug("Extracted device name: {}", deviceName);
+                            return formatDeviceName(deviceName);
+                        }
                     }
                 }
             }
         } catch (Exception e) {
-            logger.debug("Could not extract device type from path: {}", avdPath);
+            logger.debug("Could not extract device type from path: {}", avdPath, e);
         }
 
         return null;
