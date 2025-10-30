@@ -38,6 +38,11 @@ public class AndroidEmulatorManager extends JFrame {
     private JScrollPane logScrollPane;
     private boolean logExpanded = false;
 
+    // SDK accordion UI
+    private JPanel sdkPanel;
+    private JPanel sdkContentPanel;
+    private boolean sdkExpanded = false;
+
     // Device cards UI
     private JPanel devicesGridPanel;
     private List<EmulatorService.AvdInfo> allAvds = new ArrayList<>();
@@ -104,8 +109,38 @@ public class AndroidEmulatorManager extends JFrame {
     }
 
     private JPanel createSdkPanel() {
-        JPanel panel = new JPanel(new BorderLayout(5, 5));
-        panel.setBorder(BorderFactory.createTitledBorder("SDK Configuration"));
+        sdkPanel = new JPanel(new BorderLayout());
+        sdkPanel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Panel.background").darker(), 1));
+
+        // Header panel with toggle button
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        Color panelBg = UIManager.getColor("Panel.background");
+        Color headerBg = panelBg != null ?
+            (isDarkTheme() ? panelBg.brighter() : panelBg.darker()) :
+            new Color(240, 240, 240);
+        headerPanel.setBackground(headerBg);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        // Check if SDK is configured to determine initial state
+        boolean sdkConfigured = configService.isSdkConfigured();
+        sdkExpanded = !sdkConfigured; // Collapsed if SDK is configured, expanded if not
+
+        JLabel sdkLabel = new JLabel(sdkExpanded ? "▼ SDK Configuration" : "▶ SDK Configuration");
+        sdkLabel.setFont(sdkLabel.getFont().deriveFont(Font.BOLD, 13f));
+        sdkLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        sdkLabel.setForeground(UIManager.getColor("Label.foreground"));
+
+        // Status indicator
+        JLabel statusLabel = new JLabel(sdkConfigured ? "✓ Configured" : "⚠ Not Configured");
+        statusLabel.setFont(statusLabel.getFont().deriveFont(Font.PLAIN, 11f));
+        statusLabel.setForeground(sdkConfigured ? new Color(76, 175, 80) : new Color(255, 152, 0));
+
+        headerPanel.add(sdkLabel, BorderLayout.WEST);
+        headerPanel.add(statusLabel, BorderLayout.EAST);
+
+        // SDK content panel
+        sdkContentPanel = new JPanel(new BorderLayout(5, 5));
+        sdkContentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topPanel.add(new JLabel("SDK Path:"));
@@ -129,10 +164,46 @@ public class AndroidEmulatorManager extends JFrame {
         verifyButton.addActionListener(e -> verifySdk());
         buttonPanel.add(verifyButton);
 
-        panel.add(topPanel, BorderLayout.NORTH);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
+        sdkContentPanel.add(topPanel, BorderLayout.NORTH);
+        sdkContentPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        return panel;
+        // Set initial visibility
+        sdkContentPanel.setVisible(sdkExpanded);
+
+        // Toggle functionality
+        headerPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                toggleSdk(sdkLabel, statusLabel);
+            }
+        });
+
+        sdkLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                toggleSdk(sdkLabel, statusLabel);
+            }
+        });
+
+        sdkPanel.add(headerPanel, BorderLayout.NORTH);
+        sdkPanel.add(sdkContentPanel, BorderLayout.CENTER);
+
+        return sdkPanel;
+    }
+
+    private void toggleSdk(JLabel label, JLabel statusLabel) {
+        sdkExpanded = !sdkExpanded;
+
+        if (sdkExpanded) {
+            label.setText("▼ SDK Configuration");
+            sdkContentPanel.setVisible(true);
+        } else {
+            label.setText("▶ SDK Configuration");
+            sdkContentPanel.setVisible(false);
+        }
+
+        sdkPanel.revalidate();
+        sdkPanel.repaint();
     }
 
     private JPanel createAvdPanel() {
