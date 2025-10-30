@@ -1,0 +1,54 @@
+name: "CodeQL Advanced (Java only)"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '27 10 * * 3'
+
+jobs:
+  analyze:
+    name: Analyze Java
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: autobuild   # usa "autobuild" per Java (funziona anche se non c'è Kotlin)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Inizializza CodeQL per analizzare SOLO Java, ignorando la directory OLD/
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: java
+          build-mode: autobuild
+          config: |
+            paths-ignore:
+              - OLD/**
+              - target/**
+              - "**/generated/**"
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:java"
