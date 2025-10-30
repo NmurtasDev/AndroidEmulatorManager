@@ -5,17 +5,22 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/Java-21-blue.svg)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager)
-[![Version](https://img.shields.io/badge/version-3.0.0--SNAPSHOT-orange.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager/releases)
+[![Version](https://img.shields.io/badge/version-3.0.0--beta-orange.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager/releases)
 
 A modern **Java-based GUI tool** to download, install, and manage Android SDK and emulators.
 
 ## Features
 
-- **Automated SDK Setup**: Download and install Android SDK automatically
+- **Automated SDK Setup**: Download and install Android SDK automatically with license agreement
+- **Card-Based Device UI**: Modern card interface with pagination (10 devices per page)
+- **Smart Accordions**: Auto-collapsing SDK configuration and expandable logs
 - **Cross-Platform**: Works on Windows, Linux, and macOS
-- **Emulator Management**: Create, start, stop, and delete Android Virtual Devices (AVDs)
+- **Emulator Management**: Create, start, stop, rename, and delete Android Virtual Devices (AVDs)
+- **Device Information**: Display Android version, device type, and running status
+- **AVD Name Validation**: Prevent invalid characters and spaces in AVD names
+- **Dark Theme Support**: Automatically adapts to system theme (Gnome, KDE, Windows)
 - **Modern Architecture**: Built with Java 21 and Maven
-- **Clean UI**: User-friendly Swing-based interface
+- **Automated Releases**: GitHub Actions pipeline for multi-platform builds
 - **Logging**: Comprehensive logging with SLF4J and Logback
 
 ## Requirements
@@ -99,9 +104,21 @@ mvn clean package -Plinux-deb
 ## Usage
 
 1. **Launch the application**
-2. **Click "Scarica SDK"** to automatically download and install Android SDK
-3. **Create a new AVD** by clicking "Crea Nuovo"
-4. **Select an AVD** from the list and click "Avvia" to start the emulator
+2. **SDK Configuration** (if not already configured):
+   - Expand the SDK Configuration accordion
+   - Click "Download SDK" and accept the Android SDK License Agreement
+   - Wait for automatic download and installation
+3. **Create AVDs**:
+   - Click "Create New AVD"
+   - Choose API level and device type
+   - Enter a valid name (letters, numbers, underscores, hyphens only)
+4. **Manage Devices**:
+   - View devices as cards showing Android version, device type, and status
+   - Use ▶ to start, ■ to stop, ✎ to rename, 🗑 to delete
+   - Navigate pages if you have more than 10 devices
+5. **Monitor Activity**:
+   - Click the Log accordion to view detailed operation logs
+   - Use "Clear" button to reset the log
 
 ## SDK Installation Paths
 
@@ -133,14 +150,56 @@ AndroidEmulatorManager/
 
 This version introduces major architectural improvements over previous versions:
 
+### Technical Improvements
 - ✅ **Proper separation of concerns** (UI, Service, Util layers)
-- ✅ **Modern Java 21** features and best practices
+- ✅ **Modern Java 21** features (text blocks, records, switch expressions)
 - ✅ **Maven build system** for dependency management
 - ✅ **Professional logging** with SLF4J/Logback
 - ✅ **Security improvements** (no command injection vulnerabilities)
 - ✅ **Better error handling** and user feedback
 - ✅ **Unit tests** for critical functionality
-- ✅ **Cross-platform compatibility** tested
+- ✅ **Cross-platform compatibility** tested on Windows, Linux (Gnome/KDE), macOS
+
+### UI/UX Improvements
+- ✅ **Card-based device interface** with pagination
+- ✅ **Smart accordions** for SDK and logs (auto-collapse/expand)
+- ✅ **Android SDK License Agreement** dialog before download
+- ✅ **Real-time device info** (Android version, device type, running status)
+- ✅ **AVD name validation** to prevent errors
+- ✅ **Dark theme support** with automatic system theme detection
+- ✅ **Rename AVD functionality** directly from UI
+
+### CI/CD
+- ✅ **Automated releases** via GitHub Actions on tag push
+- ✅ **Multi-platform builds** (JAR, Windows EXE)
+- ✅ **Pre-release support** for beta/RC versions
+- ✅ **CodeQL security scanning** on every commit
+
+## Release Pipeline
+
+This project uses **automated releases** via GitHub Actions. When a version tag is pushed, the pipeline automatically:
+
+1. Builds Universal JAR and Windows EXE
+2. Creates a GitHub Release (stable or pre-release based on tag format)
+3. Uploads all binaries automatically
+4. Generates release notes from commits
+
+### Creating a Release
+
+See [RELEASE.md](RELEASE.md) for detailed instructions on creating releases.
+
+**Quick example:**
+```bash
+# For a stable release
+git tag v3.0.0
+git push origin v3.0.0
+
+# For a pre-release (beta, RC, alpha)
+git tag v3.0.0-beta
+git push origin v3.0.0-beta
+```
+
+The pipeline detects pre-releases automatically (tags containing `-`) and marks them accordingly on GitHub.
 
 ## Previous Versions
 
@@ -149,7 +208,7 @@ Older versions (v1 and v2) are available in the `OLD/` directory for reference.
 ### Key Differences:
 - **V1**: Single file, saves SDK to user home
 - **V2**: Single file, hardcoded path to `C:\Android\sdk`
-- **V3** (current): Modular architecture, configurable paths, Java 21
+- **V3** (current): Modular architecture, card UI, accordions, automated releases, Java 21
 
 ## Contributing
 
