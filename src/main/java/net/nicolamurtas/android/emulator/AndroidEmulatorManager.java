@@ -280,38 +280,43 @@ public class AndroidEmulatorManager extends JFrame {
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
         card.setPreferredSize(new Dimension(180, 200));
-        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Device name at top
+        // Top panel with name and info
+        JPanel topPanel = new JPanel(new BorderLayout(3, 3));
+
+        // Device name
         JLabel nameLabel = new JLabel(avd.name(), SwingConstants.CENTER);
         nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD, 14f));
-        card.add(nameLabel, BorderLayout.NORTH);
+        topPanel.add(nameLabel, BorderLayout.NORTH);
 
-        // Details panel (initially hidden, toggled on click)
-        JPanel detailsPanel = new JPanel(new GridLayout(0, 1, 2, 2));
-        detailsPanel.setVisible(false);
+        // Info panel with version and device type (ALWAYS VISIBLE)
+        JPanel infoPanel = new JPanel(new GridLayout(0, 1, 2, 2));
 
-        // Extract API level and convert to Android version name
-        String apiLevel = extractApiLevel(avd.target());
+        // Extract API level from config.ini (more reliable than target string)
+        String apiLevel = extractApiLevelFromPath(avd.path());
         String androidVersion = getAndroidVersionName(apiLevel);
-        JLabel versionLabel = new JLabel("📱 " + androidVersion);
-        versionLabel.setFont(versionLabel.getFont().deriveFont(Font.BOLD));
-        detailsPanel.add(versionLabel);
+        JLabel versionLabel = new JLabel(androidVersion, SwingConstants.CENTER);
+        versionLabel.setFont(versionLabel.getFont().deriveFont(Font.PLAIN, 11f));
+        infoPanel.add(versionLabel);
 
-        // Show device type from path (e.g., pixel_7)
+        // Show device type
         String deviceType = extractDeviceType(avd.path());
         if (deviceType != null && !deviceType.isEmpty()) {
-            detailsPanel.add(new JLabel("📐 Device: " + deviceType));
+            JLabel deviceLabel = new JLabel(deviceType, SwingConstants.CENTER);
+            deviceLabel.setFont(deviceLabel.getFont().deriveFont(Font.PLAIN, 10f));
+            deviceLabel.setForeground(Color.GRAY);
+            infoPanel.add(deviceLabel);
         }
 
         // Check if running
         boolean isRunning = emulatorService != null && emulatorService.isEmulatorRunning(avd.name());
-        JLabel statusLabel = new JLabel(isRunning ? "🟢 Running" : "⚪ Stopped");
-        statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD));
+        JLabel statusLabel = new JLabel(isRunning ? "● Running" : "○ Stopped", SwingConstants.CENTER);
+        statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD, 10f));
         statusLabel.setForeground(isRunning ? new Color(76, 175, 80) : Color.GRAY);
-        detailsPanel.add(statusLabel);
+        infoPanel.add(statusLabel);
 
-        card.add(detailsPanel, BorderLayout.CENTER);
+        topPanel.add(infoPanel, BorderLayout.CENTER);
+        card.add(topPanel, BorderLayout.NORTH);
 
         // Action buttons panel
         JPanel actionsPanel = new JPanel(new GridLayout(2, 2, 5, 5));
@@ -345,21 +350,43 @@ public class AndroidEmulatorManager extends JFrame {
 
         card.add(actionsPanel, BorderLayout.SOUTH);
 
-        // Toggle details on card click
-        card.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                detailsPanel.setVisible(!detailsPanel.isVisible());
-                card.revalidate();
-                card.repaint();
-            }
-        });
-
         return card;
     }
 
     /**
-     * Extracts API level from target string.
+     * Extracts API level from AVD config.ini file.
+     * This is more reliable than parsing the target string.
+     */
+    private String extractApiLevelFromPath(String avdPath) {
+        if (avdPath == null) return "Unknown";
+
+        try {
+            Path configIni = Path.of(avdPath).resolve("config.ini");
+            if (Files.exists(configIni)) {
+                String content = Files.readString(configIni);
+                // Look for image.sysdir.1=system-images/android-35/google_apis/x86_64/
+                for (String line : content.split("\n")) {
+                    if (line.startsWith("image.sysdir.1=")) {
+                        String sysdir = line.substring(15).trim();
+                        // Extract API number from: system-images/android-35/google_apis/x86_64/
+                        String[] parts = sysdir.split("/");
+                        for (String part : parts) {
+                            if (part.startsWith("android-")) {
+                                return part.substring(8); // Remove "android-" prefix
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.debug("Could not extract API level from path: {}", avdPath);
+        }
+
+        return "Unknown";
+    }
+
+    /**
+     * Extracts API level from target string (fallback method).
      */
     private String extractApiLevel(String target) {
         if (target == null) return "Unknown";
