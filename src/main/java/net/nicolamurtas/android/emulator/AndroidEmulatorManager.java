@@ -255,21 +255,63 @@ public class AndroidEmulatorManager extends JFrame {
             return;
         }
 
-        // Simple dialog for AVD creation
+        // Enhanced AVD creation dialog
         JTextField nameField = new JTextField("MyDevice");
-        String[] apiLevels = {"34", "35"};
+
+        // Main API levels (30-36)
+        String[] apiLevels = {"36", "35", "34", "33", "32", "31", "30"};
         JComboBox<String> apiCombo = new JComboBox<>(apiLevels);
         apiCombo.setSelectedItem("35");
-        String[] devices = {"pixel", "pixel_5", "pixel_6", "pixel_7", "pixel_8"};
-        JComboBox<String> deviceCombo = new JComboBox<>(devices);
 
-        JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
-        panel.add(new JLabel("Name:"));
-        panel.add(nameField);
-        panel.add(new JLabel("API Level:"));
-        panel.add(apiCombo);
-        panel.add(new JLabel("Device:"));
-        panel.add(deviceCombo);
+        // Legacy API levels (< 30)
+        JCheckBox legacyCheckBox = new JCheckBox("Show Legacy APIs (< 30)");
+        String[] legacyApiLevels = {"29", "28", "27", "26", "25", "24", "23", "22", "21"};
+        JComboBox<String> legacyApiCombo = new JComboBox<>(legacyApiLevels);
+        legacyApiCombo.setEnabled(false);
+        legacyApiCombo.setVisible(false);
+
+        legacyCheckBox.addActionListener(e -> {
+            boolean showLegacy = legacyCheckBox.isSelected();
+            apiCombo.setEnabled(!showLegacy);
+            legacyApiCombo.setEnabled(showLegacy);
+            legacyApiCombo.setVisible(showLegacy);
+        });
+
+        String[] devices = {"pixel", "pixel_2", "pixel_3", "pixel_4", "pixel_5",
+                           "pixel_6", "pixel_7", "pixel_8"};
+        JComboBox<String> deviceCombo = new JComboBox<>(devices);
+        deviceCombo.setSelectedItem("pixel_7");
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Row 0: Name
+        gbc.gridx = 0; gbc.gridy = 0; gbc.anchor = GridBagConstraints.WEST;
+        panel.add(new JLabel("Name:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2;
+        panel.add(nameField, gbc);
+
+        // Row 1: API Level
+        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 1;
+        panel.add(new JLabel("API Level:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2;
+        panel.add(apiCombo, gbc);
+
+        // Row 2: Legacy checkbox
+        gbc.gridx = 1; gbc.gridy = 2; gbc.gridwidth = 2;
+        panel.add(legacyCheckBox, gbc);
+
+        // Row 3: Legacy API combo (initially hidden)
+        gbc.gridx = 1; gbc.gridy = 3; gbc.gridwidth = 2;
+        panel.add(legacyApiCombo, gbc);
+
+        // Row 4: Device
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 1;
+        panel.add(new JLabel("Device:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2;
+        panel.add(deviceCombo, gbc);
 
         int result = JOptionPane.showConfirmDialog(this, panel,
             "Create New AVD", JOptionPane.OK_CANCEL_OPTION);
@@ -277,10 +319,15 @@ public class AndroidEmulatorManager extends JFrame {
         if (result == JOptionPane.OK_OPTION) {
             new Thread(() -> {
                 try {
-                    log("Creating AVD: " + nameField.getText());
+                    // Determine which API level to use (standard or legacy)
+                    String selectedApi = legacyCheckBox.isSelected() ?
+                        (String) legacyApiCombo.getSelectedItem() :
+                        (String) apiCombo.getSelectedItem();
+
+                    log("Creating AVD: " + nameField.getText() + " (API " + selectedApi + ")");
                     boolean success = emulatorService.createAvd(
                         nameField.getText(),
-                        (String) apiCombo.getSelectedItem(),
+                        selectedApi,
                         (String) deviceCombo.getSelectedItem()
                     );
 
