@@ -35,6 +35,9 @@ public class AndroidEmulatorManager extends JFrame {
     private JList<String> avdList;
     private JTextArea logArea;
     private JProgressBar progressBar;
+    private JPanel logPanel;
+    private JScrollPane logScrollPane;
+    private boolean logExpanded = false;
 
     public AndroidEmulatorManager() {
         this.configService = new ConfigService();
@@ -71,12 +74,11 @@ public class AndroidEmulatorManager extends JFrame {
         // SDK Configuration Panel
         add(createSdkPanel(), BorderLayout.NORTH);
 
-        // Center panel with AVD list and log
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        splitPane.setTopComponent(createAvdPanel());
-        splitPane.setBottomComponent(createLogPanel());
-        splitPane.setDividerLocation(300);
-        add(splitPane, BorderLayout.CENTER);
+        // Center panel with AVD list and accordion log
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.add(createAvdPanel(), BorderLayout.CENTER);
+        centerPanel.add(createLogAccordion(), BorderLayout.SOUTH);
+        add(centerPanel, BorderLayout.CENTER);
 
         // Progress bar
         progressBar = new JProgressBar();
@@ -163,18 +165,75 @@ public class AndroidEmulatorManager extends JFrame {
         return panel;
     }
 
-    private JPanel createLogPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Log"));
+    private JPanel createLogAccordion() {
+        logPanel = new JPanel(new BorderLayout());
+        logPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
 
-        logArea = new JTextArea(15, 0);
+        // Header panel with toggle button
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(240, 240, 240));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        JLabel logLabel = new JLabel("▶ Log");
+        logLabel.setFont(logLabel.getFont().deriveFont(Font.BOLD, 13f));
+        logLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        JButton clearButton = new JButton("Clear");
+        clearButton.setFont(clearButton.getFont().deriveFont(10f));
+        clearButton.setMargin(new Insets(2, 8, 2, 8));
+        clearButton.addActionListener(e -> logArea.setText(""));
+        clearButton.setVisible(false); // Initially hidden
+
+        headerPanel.add(logLabel, BorderLayout.WEST);
+        headerPanel.add(clearButton, BorderLayout.EAST);
+
+        // Log content panel (initially hidden)
+        logArea = new JTextArea(10, 0);
         logArea.setEditable(false);
-        logArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        logArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
 
-        JScrollPane scrollPane = new JScrollPane(logArea);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        logScrollPane = new JScrollPane(logArea);
+        logScrollPane.setPreferredSize(new Dimension(0, 0));
+        logScrollPane.setVisible(false);
 
-        return panel;
+        // Toggle functionality
+        headerPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                toggleLog(logLabel, clearButton);
+            }
+        });
+
+        logLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                toggleLog(logLabel, clearButton);
+            }
+        });
+
+        logPanel.add(headerPanel, BorderLayout.NORTH);
+        logPanel.add(logScrollPane, BorderLayout.CENTER);
+
+        return logPanel;
+    }
+
+    private void toggleLog(JLabel label, JButton clearButton) {
+        logExpanded = !logExpanded;
+
+        if (logExpanded) {
+            label.setText("▼ Log");
+            logScrollPane.setPreferredSize(new Dimension(0, 200));
+            logScrollPane.setVisible(true);
+            clearButton.setVisible(true);
+        } else {
+            label.setText("▶ Log");
+            logScrollPane.setPreferredSize(new Dimension(0, 0));
+            logScrollPane.setVisible(false);
+            clearButton.setVisible(false);
+        }
+
+        logPanel.revalidate();
+        logPanel.repaint();
     }
 
     private void loadConfiguration() {
