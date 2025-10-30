@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.Desktop;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -595,6 +596,12 @@ public class AndroidEmulatorManager extends JFrame {
 
         Path sdkPath = Path.of(pathText);
 
+        // Show license agreement first
+        if (!showLicenseAgreementDialog()) {
+            log("SDK download cancelled: License not accepted");
+            return;
+        }
+
         // Show component selection dialog
         List<String> selectedComponents = showSdkComponentSelectionDialog();
         if (selectedComponents == null || selectedComponents.isEmpty()) {
@@ -630,6 +637,144 @@ public class AndroidEmulatorManager extends JFrame {
                 showProgress(false);
             }
         }).start();
+    }
+
+    /**
+     * Shows the Android SDK License Agreement dialog.
+     * User must accept to proceed with SDK download.
+     *
+     * @return true if user accepted, false otherwise
+     */
+    private boolean showLicenseAgreementDialog() {
+        String licenseText = """
+                ANDROID SOFTWARE DEVELOPMENT KIT LICENSE AGREEMENT
+
+                1. Introduction
+
+                1.1 The Android Software Development Kit (referred to in the License Agreement as the "SDK"
+                and specifically including the Android system files, packaged APIs, and Google APIs add-ons)
+                is licensed to you subject to the terms of the License Agreement. The License Agreement forms
+                a legally binding contract between you and Google in relation to your use of the SDK.
+
+                1.2 "Android" means the Android software stack for devices, as made available under the
+                Android Open Source Project, which is located at the following URL:
+                https://source.android.com/, as updated from time to time.
+
+                1.3 A "compatible implementation" means any Android device that (i) complies with the Android
+                Compatibility Definition document, which can be found at the Android compatibility website
+                (https://source.android.com/compatibility) and which may be updated from time to time; and
+                (ii) successfully passes the Android Compatibility Test Suite (CTS).
+
+                1.4 "Google" means Google LLC, a Delaware corporation with principal place of business at
+                1600 Amphitheatre Parkway, Mountain View, CA 94043, United States.
+
+
+                2. Accepting this License Agreement
+
+                2.1 In order to use the SDK, you must first agree to the License Agreement. You may not use
+                the SDK if you do not accept the License Agreement.
+
+                2.2 By clicking to accept, you hereby agree to the terms of the License Agreement.
+
+                2.3 You may not use the SDK and may not accept the License Agreement if you are a person
+                barred from receiving the SDK under the laws of the United States or other countries,
+                including the country in which you are resident or from which you use the SDK.
+
+                2.4 If you are agreeing to be bound by the License Agreement on behalf of your employer or
+                other entity, you represent and warrant that you have full legal authority to bind your
+                employer or such entity to the License Agreement. If you do not have the requisite authority,
+                you may not accept the License Agreement or use the SDK on behalf of your employer or other
+                entity.
+
+
+                3. SDK License from Google
+
+                3.1 Subject to the terms of the License Agreement, Google grants you a limited, worldwide,
+                royalty-free, non-assignable, non-exclusive, and non-sublicensable license to use the SDK
+                solely to develop applications for compatible implementations of Android.
+
+                3.2 You may not use this SDK to develop applications for other platforms (including
+                non-compatible implementations of Android) or to develop another SDK. You are of course free
+                to develop applications for other platforms, including non-compatible implementations of
+                Android, provided that this SDK is not used for that purpose.
+
+                3.3 You agree that Google or third parties own all legal right, title and interest in and to
+                the SDK, including any Intellectual Property Rights that subsist in the SDK. "Intellectual
+                Property Rights" means any and all rights under patent law, copyright law, trade secret law,
+                trademark law, and any and all other proprietary rights. Google reserves all rights not
+                expressly granted to you.
+
+
+                For the complete license agreement, please visit:
+                https://developer.android.com/studio/terms
+
+
+                BY CLICKING "I ACCEPT" BELOW, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THE ABOVE
+                TERMS AND CONDITIONS AND AGREE TO BE BOUND BY THEM.
+                """;
+
+        JTextArea textArea = new JTextArea(licenseText);
+        textArea.setEditable(false);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setCaretPosition(0);
+        textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(700, 500));
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel titleLabel = new JLabel("Android SDK License Agreement");
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 16f));
+        panel.add(titleLabel, BorderLayout.NORTH);
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        JLabel noteLabel = new JLabel("<html><b>Note:</b> You must accept this license to download and use the Android SDK.</html>");
+        noteLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        bottomPanel.add(noteLabel, BorderLayout.NORTH);
+
+        JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton linkButton = new JButton("View Full License at developer.android.com");
+        linkButton.setBorderPainted(false);
+        linkButton.setContentAreaFilled(false);
+        linkButton.setForeground(new Color(33, 150, 243));
+        linkButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        linkButton.addActionListener(e -> {
+            try {
+                Desktop.getDesktop().browse(new java.net.URI("https://developer.android.com/studio/terms"));
+            } catch (Exception ex) {
+                logger.warn("Could not open browser", ex);
+            }
+        });
+        linkPanel.add(linkButton);
+        bottomPanel.add(linkPanel, BorderLayout.SOUTH);
+
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+
+        Object[] options = {"I Accept", "I Decline"};
+        int result = JOptionPane.showOptionDialog(
+            this,
+            panel,
+            "Android SDK License Agreement",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.PLAIN_MESSAGE,
+            null,
+            options,
+            options[1] // Default to "I Decline"
+        );
+
+        boolean accepted = (result == JOptionPane.YES_OPTION);
+        if (accepted) {
+            log("Android SDK License Agreement accepted by user");
+        } else {
+            log("Android SDK License Agreement declined by user");
+        }
+
+        return accepted;
     }
 
     private List<String> showSdkComponentSelectionDialog() {
