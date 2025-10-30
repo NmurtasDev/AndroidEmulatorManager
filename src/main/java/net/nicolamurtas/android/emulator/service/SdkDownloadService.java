@@ -29,12 +29,14 @@ public class SdkDownloadService {
         "platforms;android-33",
         "platforms;android-34",
         "platforms;android-35",
+        "platforms;android-36",
         "system-images;android-30;google_apis;x86_64",
         "system-images;android-31;google_apis;x86_64",
         "system-images;android-32;google_apis;x86_64",
         "system-images;android-33;google_apis;x86_64",
         "system-images;android-34;google_apis;x86_64",
         "system-images;android-35;google_apis;x86_64",
+        "system-images;android-36;google_apis;x86_64",
         "emulator",
         "build-tools;35.0.0"
     };
