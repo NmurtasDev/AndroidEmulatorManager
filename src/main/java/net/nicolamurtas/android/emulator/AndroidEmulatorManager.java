@@ -547,6 +547,25 @@ public class AndroidEmulatorManager extends JFrame {
         });
     }
 
+    /**
+     * Validates AVD name to ensure it doesn't contain spaces or invalid characters.
+     * AVD names should only contain letters, numbers, underscores, and hyphens.
+     */
+    private boolean isValidAvdName(String name) {
+        if (name == null || name.isEmpty()) {
+            return false;
+        }
+
+        // Check for spaces
+        if (name.contains(" ")) {
+            return false;
+        }
+
+        // AVD names should only contain: letters, numbers, underscores, hyphens
+        // Pattern: ^[a-zA-Z0-9_-]+$
+        return name.matches("^[a-zA-Z0-9_-]+$");
+    }
+
     private void loadConfiguration() {
         Path sdkPath = configService.getSdkPath();
         sdkPathField.setText(sdkPath.toString());
@@ -783,6 +802,18 @@ public class AndroidEmulatorManager extends JFrame {
             "Create New AVD", JOptionPane.OK_CANCEL_OPTION);
 
         if (result == JOptionPane.OK_OPTION) {
+            String avdName = nameField.getText().trim();
+
+            // Validate AVD name
+            if (!isValidAvdName(avdName)) {
+                JOptionPane.showMessageDialog(this,
+                    "Invalid AVD name!\n\n" +
+                    "The name cannot contain spaces or special characters.\n" +
+                    "Use letters, numbers, underscores, and hyphens only.",
+                    "Invalid Name", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             new Thread(() -> {
                 try {
                     // Determine which API level to use (standard or legacy)
@@ -790,13 +821,13 @@ public class AndroidEmulatorManager extends JFrame {
                         (String) legacyApiCombo.getSelectedItem() :
                         (String) apiCombo.getSelectedItem();
 
-                    log("Creating AVD: " + nameField.getText() + " (API " + selectedApi + ")");
+                    log("Creating AVD: " + avdName + " (API " + selectedApi + ")");
 
                     // Show progress bar for potential API installation
                     showProgress(true);
 
                     boolean success = emulatorService.createAvd(
-                        nameField.getText(),
+                        avdName,
                         selectedApi,
                         (String) deviceCombo.getSelectedItem(),
                         this::updateProgress
@@ -880,14 +911,28 @@ public class AndroidEmulatorManager extends JFrame {
 
     private void renameAvd(String oldName) {
         String newName = JOptionPane.showInputDialog(this,
-            "Enter new name for AVD '" + oldName + "':",
+            "Enter new name for AVD '" + oldName + "':\n\n" +
+            "(letters, numbers, underscores, and hyphens only)",
             "Rename AVD",
             JOptionPane.PLAIN_MESSAGE);
 
         if (newName != null && !newName.trim().isEmpty() && !newName.equals(oldName)) {
+            newName = newName.trim();
+
+            // Validate AVD name
+            if (!isValidAvdName(newName)) {
+                JOptionPane.showMessageDialog(this,
+                    "Invalid AVD name!\n\n" +
+                    "The name cannot contain spaces or special characters.\n" +
+                    "Use letters, numbers, underscores, and hyphens only.",
+                    "Invalid Name", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            String finalNewName = newName;
             new Thread(() -> {
                 try {
-                    log("Renaming AVD: " + oldName + " -> " + newName);
+                    log("Renaming AVD: " + oldName + " -> " + finalNewName);
 
                     // Get AVD path
                     EmulatorService.AvdInfo avdInfo = allAvds.stream()
@@ -902,8 +947,8 @@ public class AndroidEmulatorManager extends JFrame {
 
                     Path avdPath = Path.of(avdInfo.path());
                     Path iniFile = avdPath.getParent().resolve(oldName + ".ini");
-                    Path newAvdPath = avdPath.getParent().resolve(newName + ".avd");
-                    Path newIniFile = avdPath.getParent().resolve(newName + ".ini");
+                    Path newAvdPath = avdPath.getParent().resolve(finalNewName + ".avd");
+                    Path newIniFile = avdPath.getParent().resolve(finalNewName + ".ini");
 
                     // Rename .avd directory
                     if (Files.exists(avdPath)) {
@@ -915,7 +960,7 @@ public class AndroidEmulatorManager extends JFrame {
                         Files.move(iniFile, newIniFile);
                         // Update path in ini file
                         String iniContent = Files.readString(newIniFile);
-                        iniContent = iniContent.replace(oldName + ".avd", newName + ".avd");
+                        iniContent = iniContent.replace(oldName + ".avd", finalNewName + ".avd");
                         Files.writeString(newIniFile, iniContent);
                     }
 
