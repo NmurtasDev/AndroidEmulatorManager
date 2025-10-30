@@ -179,6 +179,159 @@
                 <exe.suffix>-standalone</exe.suffix>
             </properties>
         </profile>
+
+        <!-- macOS App Bundle with jpackage -->
+        <profile>
+            <id>macos</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-macos</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>jpackage</executable>
+                                    <arguments>
+                                        <argument>--input</argument>
+                                        <argument>${project.build.directory}</argument>
+                                        <argument>--name</argument>
+                                        <argument>AndroidEmulatorManager</argument>
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.artifactId}-${project.version}-jar-with-dependencies.jar</argument>
+                                        <argument>--main-class</argument>
+                                        <argument>net.nicolamurtas.android.emulator.AndroidEmulatorManager</argument>
+                                        <argument>--type</argument>
+                                        <argument>app-image</argument>
+                                        <argument>--dest</argument>
+                                        <argument>${project.build.directory}</argument>
+                                        <argument>--app-version</argument>
+                                        <argument>3.0.0</argument>
+                                        <argument>--vendor</argument>
+                                        <argument>Nicola Murtas</argument>
+                                        <argument>--copyright</argument>
+                                        <argument>MIT License</argument>
+                                        <argument>--description</argument>
+                                        <argument>Android Emulator Manager - Manage Android SDK and AVDs</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>-Xmx1024m</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Linux AppImage with jpackage -->
+        <profile>
+            <id>linux</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-linux</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>jpackage</executable>
+                                    <arguments>
+                                        <argument>--input</argument>
+                                        <argument>${project.build.directory}</argument>
+                                        <argument>--name</argument>
+                                        <argument>AndroidEmulatorManager</argument>
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.artifactId}-${project.version}-jar-with-dependencies.jar</argument>
+                                        <argument>--main-class</argument>
+                                        <argument>net.nicolamurtas.android.emulator.AndroidEmulatorManager</argument>
+                                        <argument>--type</argument>
+                                        <argument>app-image</argument>
+                                        <argument>--dest</argument>
+                                        <argument>${project.build.directory}</argument>
+                                        <argument>--app-version</argument>
+                                        <argument>3.0.0</argument>
+                                        <argument>--vendor</argument>
+                                        <argument>Nicola Murtas</argument>
+                                        <argument>--copyright</argument>
+                                        <argument>MIT License</argument>
+                                        <argument>--description</argument>
+                                        <argument>Android Emulator Manager - Manage Android SDK and AVDs</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>-Xmx1024m</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Linux DEB package -->
+        <profile>
+            <id>linux-deb</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-deb</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>jpackage</executable>
+                                    <arguments>
+                                        <argument>--input</argument>
+                                        <argument>${project.build.directory}</argument>
+                                        <argument>--name</argument>
+                                        <argument>android-emulator-manager</argument>
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.artifactId}-${project.version}-jar-with-dependencies.jar</argument>
+                                        <argument>--main-class</argument>
+                                        <argument>net.nicolamurtas.android.emulator.AndroidEmulatorManager</argument>
+                                        <argument>--type</argument>
+                                        <argument>deb</argument>
+                                        <argument>--dest</argument>
+                                        <argument>${project.build.directory}</argument>
+                                        <argument>--app-version</argument>
+                                        <argument>3.0.0</argument>
+                                        <argument>--vendor</argument>
+                                        <argument>Nicola Murtas</argument>
+                                        <argument>--copyright</argument>
+                                        <argument>MIT License</argument>
+                                        <argument>--description</argument>
+                                        <argument>Android Emulator Manager - Manage Android SDK and AVDs</argument>
+                                        <argument>--linux-menu-group</argument>
+                                        <argument>Development</argument>
+                                        <argument>--linux-shortcut</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>-Xmx1024m</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
 </project>
