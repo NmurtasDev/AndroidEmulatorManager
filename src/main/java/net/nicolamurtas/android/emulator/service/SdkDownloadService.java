@@ -23,12 +23,12 @@ public class SdkDownloadService {
 
     private static final String[] SDK_COMPONENTS = {
         "platform-tools",
-        "platforms;android-33",
         "platforms;android-34",
-        "system-images;android-33;google_apis;x86_64",
+        "platforms;android-35",
         "system-images;android-34;google_apis;x86_64",
+        "system-images;android-35;google_apis;x86_64",
         "emulator",
-        "build-tools;34.0.0"
+        "build-tools;35.0.0"
     };
 
     /**

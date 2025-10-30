@@ -257,9 +257,10 @@ public class AndroidEmulatorManager extends JFrame {
 
         // Simple dialog for AVD creation
         JTextField nameField = new JTextField("MyDevice");
-        String[] apiLevels = {"33", "34"};
+        String[] apiLevels = {"34", "35"};
         JComboBox<String> apiCombo = new JComboBox<>(apiLevels);
-        String[] devices = {"pixel", "pixel_5", "pixel_6"};
+        apiCombo.setSelectedItem("35");
+        String[] devices = {"pixel", "pixel_5", "pixel_6", "pixel_7", "pixel_8"};
         JComboBox<String> deviceCombo = new JComboBox<>(devices);
 
         JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
