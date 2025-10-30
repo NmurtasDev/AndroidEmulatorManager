@@ -43,24 +43,13 @@ jobs:
             echo "This is a stable release"
           fi
 
-      # Build 1: Universal JAR (works on all platforms)
-      - name: Build Universal JAR
-        run: mvn clean package -q
-
-      # Build 2: Windows EXE (requires Java on target system)
-      - name: Build Windows EXE
+      # Build 1: Universal JAR and Windows EXE (no jpackage issues)
+      - name: Build Universal JAR and Windows EXE
         run: mvn clean package -Pwindows -q
 
-      # Build 3: Linux DEB package (includes JRE)
-      - name: Build Linux DEB
-        run: mvn clean package -Plinux-deb -q
-
-      # Build 4: Linux App Image (includes JRE)
-      - name: Build Linux AppImage
-        run: mvn clean package -Plinux -q
-
-      # Note: macOS .app bundle requires macOS runner
-      # Skipping macOS build for now (can be added with macos-latest runner)
+      # Note: Linux DEB and AppImage builds disabled due to jpackage recursive directory bug
+      # These can be built locally with: mvn clean package -Plinux-deb or -Plinux
+      # macOS .app bundle requires macOS runner (can be added later)
 
       # Prepare release artifacts
       - name: Prepare artifacts
@@ -74,16 +63,6 @@ jobs:
           # Copy Windows EXE
           cp target/android-emulator-manager-${{ steps.version.outputs.version }}.exe \
              release-artifacts/android-emulator-manager-${{ steps.version.outputs.version }}.exe
-
-          # Copy Linux DEB
-          cp target/android-emulator-manager_${{ steps.version.outputs.version }}_amd64.deb \
-             release-artifacts/android-emulator-manager_${{ steps.version.outputs.version }}_amd64.deb
-
-          # Package Linux AppImage as tar.gz
-          cd target
-          tar -czf ../release-artifacts/android-emulator-manager-${{ steps.version.outputs.version }}-linux.tar.gz \
-              AndroidEmulatorManager/
-          cd ..
 
           # List all artifacts
           ls -lh release-artifacts/
@@ -99,8 +78,6 @@ jobs:
           files: |
             release-artifacts/*.jar
             release-artifacts/*.exe
-            release-artifacts/*.deb
-            release-artifacts/*.tar.gz
           body: |
             ## Android Emulator Manager ${{ steps.version.outputs.version }}
 
@@ -108,14 +85,14 @@ jobs:
 
             | Platform | File | Requires Java |
             |----------|------|---------------|
-            | **Universal** | `android-emulator-manager-${{ steps.version.outputs.version }}.jar` | ✅ Java 21+ |
+            | **Universal (All platforms)** | `android-emulator-manager-${{ steps.version.outputs.version }}.jar` | ✅ Java 21+ |
             | **Windows** | `android-emulator-manager-${{ steps.version.outputs.version }}.exe` | ✅ Java 21+ |
-            | **Linux DEB** | `android-emulator-manager_${{ steps.version.outputs.version }}_amd64.deb` | ❌ Includes JRE |
-            | **Linux AppImage** | `android-emulator-manager-${{ steps.version.outputs.version }}-linux.tar.gz` | ❌ Includes JRE |
+
+            > **Note for Linux users:** Use the universal JAR file. Linux packages (DEB/AppImage) can be built locally with `mvn clean package -Plinux-deb` or `-Plinux`.
 
             ### 🚀 Quick Start
 
-            **Universal JAR:**
+            **Universal JAR (Linux, macOS, Windows):**
             ```bash
             java -jar android-emulator-manager-${{ steps.version.outputs.version }}.jar
             ```
@@ -123,19 +100,6 @@ jobs:
             **Windows:**
             ```bash
             android-emulator-manager-${{ steps.version.outputs.version }}.exe
-            ```
-
-            **Linux DEB:**
-            ```bash
-            sudo dpkg -i android-emulator-manager_${{ steps.version.outputs.version }}_amd64.deb
-            android-emulator-manager
-            ```
-
-            **Linux AppImage:**
-            ```bash
-            tar -xzf android-emulator-manager-${{ steps.version.outputs.version }}-linux.tar.gz
-            cd AndroidEmulatorManager/bin
-            ./AndroidEmulatorManager
             ```
 
             ### 📋 Requirements
