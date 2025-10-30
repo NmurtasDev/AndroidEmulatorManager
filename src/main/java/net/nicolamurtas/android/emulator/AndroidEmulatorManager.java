@@ -291,15 +291,23 @@ public class AndroidEmulatorManager extends JFrame {
         JPanel detailsPanel = new JPanel(new GridLayout(0, 1, 2, 2));
         detailsPanel.setVisible(false);
 
-        // Extract API level from target
+        // Extract API level and convert to Android version name
         String apiLevel = extractApiLevel(avd.target());
-        detailsPanel.add(new JLabel("API: " + apiLevel));
-        detailsPanel.add(new JLabel("Target: " + (avd.target() != null && avd.target().length() > 20 ?
-            avd.target().substring(0, 20) + "..." : avd.target())));
+        String androidVersion = getAndroidVersionName(apiLevel);
+        JLabel versionLabel = new JLabel("📱 " + androidVersion);
+        versionLabel.setFont(versionLabel.getFont().deriveFont(Font.BOLD));
+        detailsPanel.add(versionLabel);
+
+        // Show device type from path (e.g., pixel_7)
+        String deviceType = extractDeviceType(avd.path());
+        if (deviceType != null && !deviceType.isEmpty()) {
+            detailsPanel.add(new JLabel("📐 Device: " + deviceType));
+        }
 
         // Check if running
         boolean isRunning = emulatorService != null && emulatorService.isEmulatorRunning(avd.name());
-        JLabel statusLabel = new JLabel(isRunning ? "Status: Running" : "Status: Stopped");
+        JLabel statusLabel = new JLabel(isRunning ? "🟢 Running" : "⚪ Stopped");
+        statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD));
         statusLabel.setForeground(isRunning ? new Color(76, 175, 80) : Color.GRAY);
         detailsPanel.add(statusLabel);
 
@@ -371,6 +379,88 @@ public class AndroidEmulatorManager extends JFrame {
             }
         }
         return "Unknown";
+    }
+
+    /**
+     * Converts API level to Android version name.
+     */
+    private String getAndroidVersionName(String apiLevel) {
+        if (apiLevel == null || apiLevel.equals("Unknown")) {
+            return "Android (Unknown)";
+        }
+
+        return switch (apiLevel) {
+            case "36" -> "Android 16";
+            case "35" -> "Android 15";
+            case "34" -> "Android 14";
+            case "33" -> "Android 13";
+            case "32" -> "Android 12L";
+            case "31" -> "Android 12";
+            case "30" -> "Android 11";
+            case "29" -> "Android 10";
+            case "28" -> "Android 9";
+            case "27" -> "Android 8.1";
+            case "26" -> "Android 8.0";
+            case "25" -> "Android 7.1";
+            case "24" -> "Android 7.0";
+            case "23" -> "Android 6.0";
+            case "22" -> "Android 5.1";
+            case "21" -> "Android 5.0";
+            default -> "Android API " + apiLevel;
+        };
+    }
+
+    /**
+     * Extracts device type from AVD path.
+     * Example: /home/user/.android/avd/MyDevice.avd -> looks in config.ini for hw.device.name
+     */
+    private String extractDeviceType(String avdPath) {
+        if (avdPath == null) return null;
+
+        try {
+            Path configIni = Path.of(avdPath).resolve("config.ini");
+            if (Files.exists(configIni)) {
+                String content = Files.readString(configIni);
+                // Look for hw.device.name=pixel_7
+                for (String line : content.split("\n")) {
+                    if (line.startsWith("hw.device.name=")) {
+                        String deviceName = line.substring(15).trim();
+                        // Format device name: pixel_7 -> Pixel 7
+                        return formatDeviceName(deviceName);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.debug("Could not extract device type from path: {}", avdPath);
+        }
+
+        return null;
+    }
+
+    /**
+     * Formats device name for display.
+     * Example: pixel_7 -> Pixel 7, pixel -> Pixel
+     */
+    private String formatDeviceName(String deviceName) {
+        if (deviceName == null || deviceName.isEmpty()) {
+            return deviceName;
+        }
+
+        // Replace underscores with spaces and capitalize words
+        String[] parts = deviceName.replace("_", " ").split(" ");
+        StringBuilder formatted = new StringBuilder();
+
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                formatted.append(Character.toUpperCase(part.charAt(0)));
+                if (part.length() > 1) {
+                    formatted.append(part.substring(1));
+                }
+                formatted.append(" ");
+            }
+        }
+
+        return formatted.toString().trim();
     }
 
     /**
