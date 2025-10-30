@@ -167,16 +167,23 @@ public class AndroidEmulatorManager extends JFrame {
 
     private JPanel createLogAccordion() {
         logPanel = new JPanel(new BorderLayout());
-        logPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        logPanel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Panel.background").darker(), 1));
 
-        // Header panel with toggle button
+        // Header panel with toggle button - use system colors
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(240, 240, 240));
+        // Use slightly darker/lighter version of panel background for contrast
+        Color panelBg = UIManager.getColor("Panel.background");
+        Color headerBg = panelBg != null ?
+            (isDarkTheme() ? panelBg.brighter() : panelBg.darker()) :
+            new Color(240, 240, 240);
+        headerPanel.setBackground(headerBg);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
         JLabel logLabel = new JLabel("▶ Log");
         logLabel.setFont(logLabel.getFont().deriveFont(Font.BOLD, 13f));
         logLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Ensure label uses system text color
+        logLabel.setForeground(UIManager.getColor("Label.foreground"));
 
         JButton clearButton = new JButton("Clear");
         clearButton.setFont(clearButton.getFont().deriveFont(10f));
@@ -187,10 +194,14 @@ public class AndroidEmulatorManager extends JFrame {
         headerPanel.add(logLabel, BorderLayout.WEST);
         headerPanel.add(clearButton, BorderLayout.EAST);
 
-        // Log content panel (initially hidden)
+        // Log content panel (initially hidden) - use system colors
         logArea = new JTextArea(10, 0);
         logArea.setEditable(false);
         logArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        // Set text area colors to match system theme
+        logArea.setBackground(UIManager.getColor("TextArea.background"));
+        logArea.setForeground(UIManager.getColor("TextArea.foreground"));
+        logArea.setCaretColor(UIManager.getColor("TextArea.caretForeground"));
 
         logScrollPane = new JScrollPane(logArea);
         logScrollPane.setPreferredSize(new Dimension(0, 0));
@@ -615,6 +626,24 @@ public class AndroidEmulatorManager extends JFrame {
             logArea.append(message + "\n");
             logArea.setCaretPosition(logArea.getDocument().getLength());
         });
+    }
+
+    /**
+     * Detects if the current system theme is dark.
+     * Uses panel background brightness to determine theme.
+     */
+    private boolean isDarkTheme() {
+        Color bg = UIManager.getColor("Panel.background");
+        if (bg == null) {
+            return false;
+        }
+        // Calculate perceived brightness using standard formula
+        int brightness = (int) Math.sqrt(
+            bg.getRed() * bg.getRed() * 0.241 +
+            bg.getGreen() * bg.getGreen() * 0.691 +
+            bg.getBlue() * bg.getBlue() * 0.068
+        );
+        return brightness < 130; // Dark theme if brightness < 130
     }
 
     private void onClosing() {
