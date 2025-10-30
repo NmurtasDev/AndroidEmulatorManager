@@ -35,6 +35,21 @@ cd AndroidEmulatorManager
 mvn clean package
 java -jar target/android-emulator-manager-3.0.0-jar-with-dependencies.jar
 ```
+### Build with EXE output (require java)
+
+```bash
+git clone https://github.com/NmurtasDev/AndroidEmulatorManager.git
+cd AndroidEmulatorManager
+mvn clean package -Pwindows
+```
+### Build with EXE output (dont require java)
+
+```bash
+git clone https://github.com/NmurtasDev/AndroidEmulatorManager.git
+cd AndroidEmulatorManager
+jlink --output jre --add-modules java.base,java.desktop --strip-debug --compress=2 --no-header-files --no-man-pages
+mvn clean package -Pwindows-standalone
+```
 
 ## Usage
 

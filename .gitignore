@@ -38,6 +38,7 @@ Thumbs.db
 
 # Application specific
 android_emulator_config.properties
+jre/
 *.log
 
 # Java
