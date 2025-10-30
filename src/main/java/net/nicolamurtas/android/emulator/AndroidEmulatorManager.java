@@ -31,13 +31,20 @@ public class AndroidEmulatorManager extends JFrame {
 
     // UI Components
     private JTextField sdkPathField;
-    private DefaultListModel<String> avdListModel;
-    private JList<String> avdList;
     private JTextArea logArea;
     private JProgressBar progressBar;
     private JPanel logPanel;
     private JScrollPane logScrollPane;
     private boolean logExpanded = false;
+
+    // Device cards UI
+    private JPanel devicesGridPanel;
+    private List<EmulatorService.AvdInfo> allAvds = new ArrayList<>();
+    private int currentPage = 0;
+    private static final int CARDS_PER_PAGE = 10;
+    private JLabel pageLabel;
+    private JButton prevPageButton;
+    private JButton nextPageButton;
 
     public AndroidEmulatorManager() {
         this.configService = new ConfigService();
@@ -131,36 +138,52 @@ public class AndroidEmulatorManager extends JFrame {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Android Virtual Devices"));
 
-        avdListModel = new DefaultListModel<>();
-        avdList = new JList<>(avdListModel);
-        avdList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        // Devices grid panel (5 columns x 2 rows = 10 cards)
+        devicesGridPanel = new JPanel(new GridLayout(2, 5, 10, 10));
+        devicesGridPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JScrollPane scrollPane = new JScrollPane(avdList);
+        JScrollPane scrollPane = new JScrollPane(devicesGridPanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout());
+        // Bottom panel with pagination and buttons
+        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
 
-        JButton createButton = new JButton("Create AVD");
+        // Pagination controls
+        JPanel paginationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        prevPageButton = new JButton("◄ Previous");
+        prevPageButton.addActionListener(e -> changePage(-1));
+        prevPageButton.setEnabled(false);
+
+        pageLabel = new JLabel("Page 1", SwingConstants.CENTER);
+        pageLabel.setPreferredSize(new Dimension(100, 25));
+
+        nextPageButton = new JButton("Next ►");
+        nextPageButton.addActionListener(e -> changePage(1));
+        nextPageButton.setEnabled(false);
+
+        paginationPanel.add(prevPageButton);
+        paginationPanel.add(pageLabel);
+        paginationPanel.add(nextPageButton);
+
+        // Action buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        JButton createButton = new JButton("Create New AVD");
+        createButton.setBackground(new Color(76, 175, 80));
+        createButton.setForeground(Color.WHITE);
         createButton.addActionListener(e -> createAvdDialog());
         buttonPanel.add(createButton);
-
-        JButton startButton = new JButton("Start");
-        startButton.addActionListener(e -> startEmulator());
-        buttonPanel.add(startButton);
-
-        JButton stopButton = new JButton("Stop");
-        stopButton.addActionListener(e -> stopEmulator());
-        buttonPanel.add(stopButton);
-
-        JButton deleteButton = new JButton("Delete");
-        deleteButton.addActionListener(e -> deleteAvd());
-        buttonPanel.add(deleteButton);
 
         JButton refreshButton = new JButton("Refresh");
         refreshButton.addActionListener(e -> refreshAvdList());
         buttonPanel.add(refreshButton);
 
-        panel.add(buttonPanel, BorderLayout.SOUTH);
+        bottomPanel.add(paginationPanel, BorderLayout.NORTH);
+        bottomPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        panel.add(bottomPanel, BorderLayout.SOUTH);
 
         return panel;
     }
@@ -245,6 +268,153 @@ public class AndroidEmulatorManager extends JFrame {
 
         logPanel.revalidate();
         logPanel.repaint();
+    }
+
+    /**
+     * Creates a device card panel for an AVD.
+     */
+    private JPanel createDeviceCard(EmulatorService.AvdInfo avd) {
+        JPanel card = new JPanel(new BorderLayout(5, 5));
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(UIManager.getColor("Panel.border"), 2),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        card.setPreferredSize(new Dimension(180, 200));
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Device name at top
+        JLabel nameLabel = new JLabel(avd.name(), SwingConstants.CENTER);
+        nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD, 14f));
+        card.add(nameLabel, BorderLayout.NORTH);
+
+        // Details panel (initially hidden, toggled on click)
+        JPanel detailsPanel = new JPanel(new GridLayout(0, 1, 2, 2));
+        detailsPanel.setVisible(false);
+
+        // Extract API level from target
+        String apiLevel = extractApiLevel(avd.target());
+        detailsPanel.add(new JLabel("API: " + apiLevel));
+        detailsPanel.add(new JLabel("Target: " + (avd.target() != null && avd.target().length() > 20 ?
+            avd.target().substring(0, 20) + "..." : avd.target())));
+
+        // Check if running
+        boolean isRunning = emulatorService != null && emulatorService.isEmulatorRunning(avd.name());
+        JLabel statusLabel = new JLabel(isRunning ? "Status: Running" : "Status: Stopped");
+        statusLabel.setForeground(isRunning ? new Color(76, 175, 80) : Color.GRAY);
+        detailsPanel.add(statusLabel);
+
+        card.add(detailsPanel, BorderLayout.CENTER);
+
+        // Action buttons panel
+        JPanel actionsPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+
+        JButton startBtn = new JButton("▶");
+        startBtn.setToolTipText("Start");
+        startBtn.setBackground(new Color(76, 175, 80));
+        startBtn.setForeground(Color.WHITE);
+        startBtn.addActionListener(e -> startEmulatorByName(avd.name()));
+
+        JButton stopBtn = new JButton("■");
+        stopBtn.setToolTipText("Stop");
+        stopBtn.setBackground(new Color(244, 67, 54));
+        stopBtn.setForeground(Color.WHITE);
+        stopBtn.addActionListener(e -> stopEmulatorByName(avd.name()));
+
+        JButton renameBtn = new JButton("✎");
+        renameBtn.setToolTipText("Rename");
+        renameBtn.addActionListener(e -> renameAvd(avd.name()));
+
+        JButton deleteBtn = new JButton("🗑");
+        deleteBtn.setToolTipText("Delete");
+        deleteBtn.setBackground(new Color(244, 67, 54));
+        deleteBtn.setForeground(Color.WHITE);
+        deleteBtn.addActionListener(e -> deleteAvdByName(avd.name()));
+
+        actionsPanel.add(startBtn);
+        actionsPanel.add(stopBtn);
+        actionsPanel.add(renameBtn);
+        actionsPanel.add(deleteBtn);
+
+        card.add(actionsPanel, BorderLayout.SOUTH);
+
+        // Toggle details on card click
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                detailsPanel.setVisible(!detailsPanel.isVisible());
+                card.revalidate();
+                card.repaint();
+            }
+        });
+
+        return card;
+    }
+
+    /**
+     * Extracts API level from target string.
+     */
+    private String extractApiLevel(String target) {
+        if (target == null) return "Unknown";
+        // Target format: "Android X.Y (API level Z)" or similar
+        if (target.contains("API level")) {
+            int start = target.indexOf("API level") + 10;
+            int end = target.indexOf(")", start);
+            if (end > start) {
+                return target.substring(start, end).trim();
+            }
+        }
+        // Try to extract just the number
+        String[] parts = target.split("\\s+");
+        for (String part : parts) {
+            if (part.matches("\\d+")) {
+                return part;
+            }
+        }
+        return "Unknown";
+    }
+
+    /**
+     * Changes the current page of devices.
+     */
+    private void changePage(int delta) {
+        int totalPages = (int) Math.ceil((double) allAvds.size() / CARDS_PER_PAGE);
+        currentPage = Math.max(0, Math.min(currentPage + delta, totalPages - 1));
+        updateDeviceCards();
+    }
+
+    /**
+     * Updates the device cards display for the current page.
+     */
+    private void updateDeviceCards() {
+        SwingUtilities.invokeLater(() -> {
+            devicesGridPanel.removeAll();
+
+            int start = currentPage * CARDS_PER_PAGE;
+            int end = Math.min(start + CARDS_PER_PAGE, allAvds.size());
+
+            for (int i = start; i < end; i++) {
+                devicesGridPanel.add(createDeviceCard(allAvds.get(i)));
+            }
+
+            // Fill empty slots with placeholder panels
+            int cardsShown = end - start;
+            for (int i = cardsShown; i < CARDS_PER_PAGE; i++) {
+                JPanel placeholder = new JPanel();
+                placeholder.setPreferredSize(new Dimension(180, 200));
+                placeholder.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1, true));
+                placeholder.setBackground(UIManager.getColor("Panel.background"));
+                devicesGridPanel.add(placeholder);
+            }
+
+            // Update pagination controls
+            int totalPages = Math.max(1, (int) Math.ceil((double) allAvds.size() / CARDS_PER_PAGE));
+            pageLabel.setText("Page " + (currentPage + 1) + " / " + totalPages);
+            prevPageButton.setEnabled(currentPage > 0);
+            nextPageButton.setEnabled(currentPage < totalPages - 1);
+
+            devicesGridPanel.revalidate();
+            devicesGridPanel.repaint();
+        });
     }
 
     private void loadConfiguration() {
@@ -518,20 +688,21 @@ public class AndroidEmulatorManager extends JFrame {
         }
     }
 
-    private void startEmulator() {
-        String selected = avdList.getSelectedValue();
-        if (selected == null) {
+    private void startEmulatorByName(String avdName) {
+        if (emulatorService == null) {
             JOptionPane.showMessageDialog(this,
-                "Please select an AVD",
-                "Warning", JOptionPane.WARNING_MESSAGE);
+                "EmulatorService not initialized",
+                "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         new Thread(() -> {
             try {
-                log("Starting emulator: " + selected);
-                emulatorService.startEmulator(selected);
-                log("Emulator started: " + selected);
+                log("Starting emulator: " + avdName);
+                emulatorService.startEmulator(avdName);
+                log("Emulator started: " + avdName);
+                // Refresh cards to update status
+                refreshAvdList();
             } catch (Exception e) {
                 logger.error("Failed to start emulator", e);
                 log("ERROR: " + e.getMessage());
@@ -539,37 +710,30 @@ public class AndroidEmulatorManager extends JFrame {
         }).start();
     }
 
-    private void stopEmulator() {
-        String selected = avdList.getSelectedValue();
-        if (selected == null) {
+    private void stopEmulatorByName(String avdName) {
+        if (emulatorService == null) {
             JOptionPane.showMessageDialog(this,
-                "Please select an AVD",
-                "Warning", JOptionPane.WARNING_MESSAGE);
+                "EmulatorService not initialized",
+                "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        emulatorService.stopEmulator(selected);
-        log("Emulator stopped: " + selected);
+        emulatorService.stopEmulator(avdName);
+        log("Emulator stopped: " + avdName);
+        // Refresh cards to update status
+        refreshAvdList();
     }
 
-    private void deleteAvd() {
-        String selected = avdList.getSelectedValue();
-        if (selected == null) {
-            JOptionPane.showMessageDialog(this,
-                "Please select an AVD",
-                "Warning", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
+    private void deleteAvdByName(String avdName) {
         int result = JOptionPane.showConfirmDialog(this,
-            "Delete AVD '" + selected + "'?",
-            "Confirm", JOptionPane.YES_NO_OPTION);
+            "Delete AVD '" + avdName + "'?",
+            "Confirm Deletion", JOptionPane.YES_NO_OPTION);
 
         if (result == JOptionPane.YES_OPTION) {
             new Thread(() -> {
                 try {
-                    log("Deleting AVD: " + selected);
-                    boolean success = emulatorService.deleteAvd(selected);
+                    log("Deleting AVD: " + avdName);
+                    boolean success = emulatorService.deleteAvd(avdName);
                     if (success) {
                         log("AVD deleted successfully");
                         refreshAvdList();
@@ -584,6 +748,60 @@ public class AndroidEmulatorManager extends JFrame {
         }
     }
 
+    private void renameAvd(String oldName) {
+        String newName = JOptionPane.showInputDialog(this,
+            "Enter new name for AVD '" + oldName + "':",
+            "Rename AVD",
+            JOptionPane.PLAIN_MESSAGE);
+
+        if (newName != null && !newName.trim().isEmpty() && !newName.equals(oldName)) {
+            new Thread(() -> {
+                try {
+                    log("Renaming AVD: " + oldName + " -> " + newName);
+
+                    // Get AVD path
+                    EmulatorService.AvdInfo avdInfo = allAvds.stream()
+                        .filter(avd -> avd.name().equals(oldName))
+                        .findFirst()
+                        .orElse(null);
+
+                    if (avdInfo == null || avdInfo.path() == null) {
+                        log("ERROR: Could not find AVD path");
+                        return;
+                    }
+
+                    Path avdPath = Path.of(avdInfo.path());
+                    Path iniFile = avdPath.getParent().resolve(oldName + ".ini");
+                    Path newAvdPath = avdPath.getParent().resolve(newName + ".avd");
+                    Path newIniFile = avdPath.getParent().resolve(newName + ".ini");
+
+                    // Rename .avd directory
+                    if (Files.exists(avdPath)) {
+                        Files.move(avdPath, newAvdPath);
+                    }
+
+                    // Rename .ini file
+                    if (Files.exists(iniFile)) {
+                        Files.move(iniFile, newIniFile);
+                        // Update path in ini file
+                        String iniContent = Files.readString(newIniFile);
+                        iniContent = iniContent.replace(oldName + ".avd", newName + ".avd");
+                        Files.writeString(newIniFile, iniContent);
+                    }
+
+                    log("AVD renamed successfully");
+                    refreshAvdList();
+                } catch (Exception e) {
+                    logger.error("Failed to rename AVD", e);
+                    log("ERROR: " + e.getMessage());
+                    JOptionPane.showMessageDialog(this,
+                        "Failed to rename AVD: " + e.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }).start();
+        }
+    }
+
     private void refreshAvdList() {
         if (emulatorService == null) {
             return;
@@ -593,8 +811,9 @@ public class AndroidEmulatorManager extends JFrame {
             try {
                 var avds = emulatorService.listAvds();
                 SwingUtilities.invokeLater(() -> {
-                    avdListModel.clear();
-                    avds.forEach(avd -> avdListModel.addElement(avd.name()));
+                    allAvds = new ArrayList<>(avds);
+                    currentPage = 0;
+                    updateDeviceCards();
                 });
                 log("Refreshed AVD list (" + avds.size() + " devices)");
             } catch (Exception e) {
