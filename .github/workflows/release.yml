@@ -1,0 +1,149 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags (v3.0.0, v3.0.0-rc1, etc.)
+
+permissions:
+  contents: write  # Required to create releases
+
+jobs:
+  build-and-release:
+    name: Build Multi-Platform Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Extract version from tag (v3.0.0 -> 3.0.0)
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      # Determine if this is a pre-release (contains -, like v3.0.0-rc1)
+      - name: Check if pre-release
+        id: prerelease
+        run: |
+          if [[ "${{ steps.version.outputs.version }}" == *"-"* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "This is a pre-release"
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "This is a stable release"
+          fi
+
+      # Build 1: Universal JAR (works on all platforms)
+      - name: Build Universal JAR
+        run: mvn clean package -q
+
+      # Build 2: Windows EXE (requires Java on target system)
+      - name: Build Windows EXE
+        run: mvn clean package -Pwindows -q
+
+      # Build 3: Linux DEB package (includes JRE)
+      - name: Build Linux DEB
+        run: mvn clean package -Plinux-deb -q
+
+      # Build 4: Linux App Image (includes JRE)
+      - name: Build Linux AppImage
+        run: mvn clean package -Plinux -q
+
+      # Note: macOS .app bundle requires macOS runner
+      # Skipping macOS build for now (can be added with macos-latest runner)
+
+      # Prepare release artifacts
+      - name: Prepare artifacts
+        run: |
+          mkdir -p release-artifacts
+
+          # Copy JAR
+          cp target/android-emulator-manager-${{ steps.version.outputs.version }}-jar-with-dependencies.jar \
+             release-artifacts/android-emulator-manager-${{ steps.version.outputs.version }}.jar
+
+          # Copy Windows EXE
+          cp target/android-emulator-manager-${{ steps.version.outputs.version }}.exe \
+             release-artifacts/android-emulator-manager-${{ steps.version.outputs.version }}.exe
+
+          # Copy Linux DEB
+          cp target/android-emulator-manager_${{ steps.version.outputs.version }}_amd64.deb \
+             release-artifacts/android-emulator-manager_${{ steps.version.outputs.version }}_amd64.deb
+
+          # Package Linux AppImage as tar.gz
+          cd target
+          tar -czf ../release-artifacts/android-emulator-manager-${{ steps.version.outputs.version }}-linux.tar.gz \
+              AndroidEmulatorManager/
+          cd ..
+
+          # List all artifacts
+          ls -lh release-artifacts/
+
+      # Create GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.version.outputs.version }}
+          prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
+          draft: false
+          generate_release_notes: true
+          files: |
+            release-artifacts/*.jar
+            release-artifacts/*.exe
+            release-artifacts/*.deb
+            release-artifacts/*.tar.gz
+          body: |
+            ## Android Emulator Manager ${{ steps.version.outputs.version }}
+
+            ### 📦 Downloads
+
+            | Platform | File | Requires Java |
+            |----------|------|---------------|
+            | **Universal** | `android-emulator-manager-${{ steps.version.outputs.version }}.jar` | ✅ Java 21+ |
+            | **Windows** | `android-emulator-manager-${{ steps.version.outputs.version }}.exe` | ✅ Java 21+ |
+            | **Linux DEB** | `android-emulator-manager_${{ steps.version.outputs.version }}_amd64.deb` | ❌ Includes JRE |
+            | **Linux AppImage** | `android-emulator-manager-${{ steps.version.outputs.version }}-linux.tar.gz` | ❌ Includes JRE |
+
+            ### 🚀 Quick Start
+
+            **Universal JAR:**
+            ```bash
+            java -jar android-emulator-manager-${{ steps.version.outputs.version }}.jar
+            ```
+
+            **Windows:**
+            ```bash
+            android-emulator-manager-${{ steps.version.outputs.version }}.exe
+            ```
+
+            **Linux DEB:**
+            ```bash
+            sudo dpkg -i android-emulator-manager_${{ steps.version.outputs.version }}_amd64.deb
+            android-emulator-manager
+            ```
+
+            **Linux AppImage:**
+            ```bash
+            tar -xzf android-emulator-manager-${{ steps.version.outputs.version }}-linux.tar.gz
+            cd AndroidEmulatorManager/bin
+            ./AndroidEmulatorManager
+            ```
+
+            ### 📋 Requirements
+            - Java 21 or higher (for JAR and Windows EXE)
+            - Internet connection for SDK download
+
+            ---
+
+            🤖 **Auto-generated release** via GitHub Actions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
