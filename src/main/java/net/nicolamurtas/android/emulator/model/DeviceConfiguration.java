@@ -1,7 +1,9 @@
 package net.nicolamurtas.android.emulator.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -14,6 +16,8 @@ import java.util.List;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DeviceConfiguration {
     /**
      * Device type (e.g., "pixel_7", "pixel_8")
