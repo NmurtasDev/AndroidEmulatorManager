@@ -16,12 +16,20 @@ import java.awt.*;
 public class MainView extends JFrame {
     private static final Logger logger = LoggerFactory.getLogger(MainView.class);
 
-    private final SdkConfigPanel sdkConfigPanel;
-    private final AvdGridPanel avdGridPanel;
-    private final LogPanel logPanel;
-    private final JProgressBar progressBar;
+    private SdkConfigPanel sdkConfigPanel;
+    private AvdGridPanel avdGridPanel;
+    private LogPanel logPanel;
+    private JProgressBar progressBar;
 
     public MainView(boolean sdkConfigured) {
+        // Set system look and feel FIRST, before creating any components
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            logger.warn("Failed to set system look and feel", e);
+        }
+
+        // Now create components AFTER Look and Feel is set
         this.sdkConfigPanel = new SdkConfigPanel(sdkConfigured);
         this.avdGridPanel = new AvdGridPanel();
         this.logPanel = new LogPanel();
@@ -35,13 +43,6 @@ public class MainView extends JFrame {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Let controller handle closing
         setSize(1000, 800);
         setLocationRelativeTo(null);
-
-        // Set system look and feel
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            logger.warn("Failed to set system look and feel", e);
-        }
 
         // Main layout
         setLayout(new BorderLayout(10, 10));

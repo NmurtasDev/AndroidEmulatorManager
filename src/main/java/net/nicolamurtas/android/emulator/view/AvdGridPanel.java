@@ -49,7 +49,6 @@ public class AvdGridPanel extends JPanel {
 
         // Devices grid panel (5 columns x 2 rows = 10 cards)
         devicesGridPanel = new JPanel(new GridLayout(2, 5, 10, 10));
-        devicesGridPanel.setBackground(UIManager.getColor("Panel.background"));
         devicesGridPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JScrollPane scrollPane = new JScrollPane(devicesGridPanel);
@@ -64,18 +63,14 @@ public class AvdGridPanel extends JPanel {
 
     private JPanel createBottomPanel() {
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
-        bottomPanel.setBackground(UIManager.getColor("Panel.background"));
 
         // Pagination controls
         JPanel paginationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        paginationPanel.setBackground(UIManager.getColor("Panel.background"));
-
         prevPageButton = new JButton("◄ Previous");
         prevPageButton.addActionListener(e -> changePage(-1));
         prevPageButton.setEnabled(false);
 
         pageLabel = new JLabel("Page 1", SwingConstants.CENTER);
-        pageLabel.setForeground(UIManager.getColor("Label.foreground"));
         pageLabel.setPreferredSize(new Dimension(100, 25));
 
         nextPageButton = new JButton("Next ►");
@@ -88,7 +83,6 @@ public class AvdGridPanel extends JPanel {
 
         // Action buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonPanel.setBackground(UIManager.getColor("Panel.background"));
 
         JButton createButton = new JButton("Create New AVD");
         createButton.setBackground(ThemeUtils.Colors.SUCCESS);
@@ -115,7 +109,6 @@ public class AvdGridPanel extends JPanel {
      */
     private JPanel createDeviceCard(EmulatorService.AvdInfo avd) {
         JPanel card = new JPanel(new BorderLayout(5, 5));
-        card.setBackground(UIManager.getColor("Panel.background"));
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(UIManager.getColor("Panel.border"), 2),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
@@ -135,24 +128,20 @@ public class AvdGridPanel extends JPanel {
 
     private JPanel createCardTopPanel(EmulatorService.AvdInfo avd) {
         JPanel topPanel = new JPanel(new BorderLayout(3, 3));
-        topPanel.setBackground(UIManager.getColor("Panel.background"));
 
         // Device name
         JLabel nameLabel = new JLabel(avd.name(), SwingConstants.CENTER);
         nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD, 14f));
-        nameLabel.setForeground(UIManager.getColor("Label.foreground"));
         topPanel.add(nameLabel, BorderLayout.NORTH);
 
         // Info panel with version and device type
         JPanel infoPanel = new JPanel(new GridLayout(0, 1, 2, 2));
-        infoPanel.setBackground(UIManager.getColor("Panel.background"));
 
         // Extract API level and show Android version
         String apiLevel = extractApiLevelFromPath(avd.path());
         String androidVersion = AndroidVersionMapper.getAndroidVersionName(apiLevel);
         JLabel versionLabel = new JLabel(androidVersion, SwingConstants.CENTER);
         versionLabel.setFont(versionLabel.getFont().deriveFont(Font.PLAIN, 11f));
-        versionLabel.setForeground(UIManager.getColor("Label.foreground"));
         infoPanel.add(versionLabel);
 
         // Show device type
@@ -160,16 +149,7 @@ public class AvdGridPanel extends JPanel {
         if (deviceType != null && !deviceType.isEmpty()) {
             JLabel deviceLabel = new JLabel(deviceType, SwingConstants.CENTER);
             deviceLabel.setFont(deviceLabel.getFont().deriveFont(Font.PLAIN, 10f));
-            // Use a dimmed version of the foreground color for secondary text
-            Color labelColor = UIManager.getColor("Label.foreground");
-            if (labelColor != null) {
-                deviceLabel.setForeground(new Color(
-                    labelColor.getRed(),
-                    labelColor.getGreen(),
-                    labelColor.getBlue(),
-                    180 // Alpha for dimming
-                ));
-            }
+            deviceLabel.setForeground(Color.GRAY);
             infoPanel.add(deviceLabel);
         }
 
@@ -177,20 +157,7 @@ public class AvdGridPanel extends JPanel {
         boolean isRunning = emulatorService != null && emulatorService.isEmulatorRunning(avd.name());
         JLabel statusLabel = new JLabel(isRunning ? "● Running" : "○ Stopped", SwingConstants.CENTER);
         statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD, 10f));
-        if (isRunning) {
-            statusLabel.setForeground(ThemeUtils.Colors.SUCCESS);
-        } else {
-            // Use dimmed foreground color for stopped status
-            Color labelColor = UIManager.getColor("Label.foreground");
-            if (labelColor != null) {
-                statusLabel.setForeground(new Color(
-                    labelColor.getRed(),
-                    labelColor.getGreen(),
-                    labelColor.getBlue(),
-                    180 // Alpha for dimming
-                ));
-            }
-        }
+        statusLabel.setForeground(isRunning ? ThemeUtils.Colors.SUCCESS : Color.GRAY);
         infoPanel.add(statusLabel);
 
         topPanel.add(infoPanel, BorderLayout.CENTER);
@@ -199,7 +166,6 @@ public class AvdGridPanel extends JPanel {
 
     private JPanel createCardActionsPanel(EmulatorService.AvdInfo avd) {
         JPanel actionsPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-        actionsPanel.setBackground(UIManager.getColor("Panel.background"));
 
         JButton startBtn = new JButton("▶");
         startBtn.setToolTipText("Start");
@@ -314,12 +280,7 @@ public class AvdGridPanel extends JPanel {
             for (int i = cardsShown; i < CARDS_PER_PAGE; i++) {
                 JPanel placeholder = new JPanel();
                 placeholder.setPreferredSize(new Dimension(180, 200));
-                Color borderColor = UIManager.getColor("Panel.border");
-                if (borderColor == null) {
-                    borderColor = UIManager.getColor("Panel.background").darker();
-                }
-                placeholder.setBorder(BorderFactory.createLineBorder(borderColor, 1, true));
-                placeholder.setBackground(UIManager.getColor("Panel.background"));
+                placeholder.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1, true));
                 devicesGridPanel.add(placeholder);
             }
 
