@@ -34,15 +34,10 @@ jobs:
       - name: Generate coverage report
         run: mvn jacoco:report
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./target/site/jacoco/jacoco.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-          verbose: true
 
       - name: Archive coverage report
         uses: actions/upload-artifact@v4
