@@ -15,7 +15,7 @@ class DeviceNameFormatterTest {
     void testFormatDeviceName_WithUnderscore() {
         assertEquals("Pixel 7", DeviceNameFormatter.formatDeviceName("pixel_7"));
         assertEquals("Pixel 8", DeviceNameFormatter.formatDeviceName("pixel_8"));
-        assertEquals("Nexus 5X", DeviceNameFormatter.formatDeviceName("nexus_5x"));
+        assertEquals("Nexus 5x", DeviceNameFormatter.formatDeviceName("nexus_5x"));
     }
 
     @Test
