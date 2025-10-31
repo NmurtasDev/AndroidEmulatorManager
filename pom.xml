@@ -39,6 +39,7 @@
         <junit.version>5.10.1</junit.version>
         <slf4j.version>2.0.9</slf4j.version>
         <logback.version>1.5.19</logback.version>
+        <lombok.version>1.18.30</lombok.version>
 
         <!-- Launch4j default properties -->
         <bundled.jre.path></bundled.jre.path>
@@ -57,6 +58,14 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Testing -->
