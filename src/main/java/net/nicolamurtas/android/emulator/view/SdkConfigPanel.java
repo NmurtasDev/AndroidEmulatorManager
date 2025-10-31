@@ -80,11 +80,16 @@ public class SdkConfigPanel extends JPanel {
 
     private JPanel createContentPanel() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBackground(UIManager.getColor("Panel.background"));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Top panel with path field
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        topPanel.add(new JLabel("SDK Path:"));
+        topPanel.setBackground(UIManager.getColor("Panel.background"));
+
+        JLabel pathLabel = new JLabel("SDK Path:");
+        pathLabel.setForeground(UIManager.getColor("Label.foreground"));
+        topPanel.add(pathLabel);
         topPanel.add(sdkPathField);
 
         JButton browseButton = new JButton("Browse...");
@@ -95,6 +100,7 @@ public class SdkConfigPanel extends JPanel {
 
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonPanel.setBackground(UIManager.getColor("Panel.background"));
 
         JButton downloadButton = new JButton("Download SDK");
         downloadButton.setBackground(ThemeUtils.Colors.SUCCESS);
