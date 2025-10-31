@@ -1,6 +1,8 @@
 # Android Emulator Manager
 
 [![Java CI with Maven](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/maven.yml/badge.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/maven.yml)
+[![Code Quality](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/code-quality.yml/badge.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/code-quality.yml)
+[![codecov](https://codecov.io/gh/NmurtasDev/AndroidEmulatorManager/branch/main/graph/badge.svg)](https://codecov.io/gh/NmurtasDev/AndroidEmulatorManager)
 [![CodeQL](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/codeql.yml/badge.svg)](https://github.com/NmurtasDev/AndroidEmulatorManager/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/Java-21-blue.svg)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
@@ -169,11 +171,14 @@ This version introduces major architectural improvements over previous versions:
 - ✅ **Dark theme support** with automatic system theme detection
 - ✅ **Rename AVD functionality** directly from UI
 
-### CI/CD
+### CI/CD & Quality
 - ✅ **Automated releases** via GitHub Actions on tag push
 - ✅ **Multi-platform builds** (JAR, Windows EXE)
 - ✅ **Pre-release support** for beta/RC versions
 - ✅ **CodeQL security scanning** on every commit
+- ✅ **Automated code coverage** with JaCoCo and Codecov
+- ✅ **Code quality checks** on every PR
+- ✅ **Unit test execution** with detailed coverage reports (55 tests)
 
 ## Release Pipeline
 

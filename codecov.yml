@@ -1,0 +1,43 @@
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    wait_for_ci: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "50...100"
+
+  status:
+    project:
+      default:
+        target: 50%
+        threshold: 5%
+        if_ci_failed: error
+
+    patch:
+      default:
+        target: 60%
+        threshold: 10%
+
+    changes:
+      default:
+        if_ci_failed: error
+
+comment:
+  layout: "reach,diff,flags,tree,footer"
+  behavior: default
+  require_changes: false
+  require_base: no
+  require_head: yes
+
+ignore:
+  - "src/test/**"
+  - "**/*Test.java"
+  - "**/test/**"
+
+flags:
+  unittests:
+    paths:
+      - src/main/java/
+    carryforward: true
