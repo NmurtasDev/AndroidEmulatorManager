@@ -16,8 +16,8 @@ import java.util.function.Consumer;
 public class SdkConfigPanel extends JPanel {
     private final JTextField sdkPathField;
     private final JPanel contentPanel;
-    private final JLabel headerLabel;
-    private final JLabel statusLabel;
+    private JLabel headerLabel;
+    private JLabel statusLabel;
     private boolean expanded = false;
 
     // Action handlers (set by controller)

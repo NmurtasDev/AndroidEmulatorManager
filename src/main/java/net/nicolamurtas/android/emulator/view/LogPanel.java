@@ -15,8 +15,8 @@ import java.awt.*;
 public class LogPanel extends JPanel {
     private final JTextArea logArea;
     private final JScrollPane logScrollPane;
-    private final JLabel logLabel;
-    private final JButton clearButton;
+    private JLabel logLabel;
+    private JButton clearButton;
     private boolean expanded = false;
 
     public LogPanel() {

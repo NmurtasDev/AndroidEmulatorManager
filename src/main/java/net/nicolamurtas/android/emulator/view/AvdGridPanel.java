@@ -27,9 +27,9 @@ public class AvdGridPanel extends JPanel {
     private static final int CARDS_PER_PAGE = 10;
 
     private final JPanel devicesGridPanel;
-    private final JLabel pageLabel;
-    private final JButton prevPageButton;
-    private final JButton nextPageButton;
+    private JLabel pageLabel;
+    private JButton prevPageButton;
+    private JButton nextPageButton;
 
     private List<EmulatorService.AvdInfo> allAvds = new ArrayList<>();
     private int currentPage = 0;
@@ -59,11 +59,6 @@ public class AvdGridPanel extends JPanel {
         // Bottom panel with pagination and buttons
         JPanel bottomPanel = createBottomPanel();
         add(bottomPanel, BorderLayout.SOUTH);
-
-        // Initialize pagination controls
-        prevPageButton = (JButton) bottomPanel.getComponent(0); // Workaround, initialized in createBottomPanel
-        nextPageButton = (JButton) bottomPanel.getComponent(2);
-        pageLabel = (JLabel) bottomPanel.getComponent(1);
     }
 
     private JPanel createBottomPanel() {
