@@ -78,9 +78,13 @@ public class ProcessExecutor {
 
         // Provide input if needed
         if (inputProvider != null) {
-            try (PrintWriter writer = new PrintWriter(process.getOutputStream())) {
+            try {
+                // Don't use try-with-resources here to avoid closing the OutputStream
+                // Closing stdin prematurely causes issues on Windows with avdmanager.bat
+                PrintWriter writer = new PrintWriter(process.getOutputStream());
                 inputProvider.accept(writer);
                 writer.flush();
+                // Intentionally not closing the writer - the process needs stdin to remain open
             } catch (Exception e) {
                 logger.warn("Failed to provide input to process", e);
             }
@@ -159,9 +163,15 @@ public class ProcessExecutor {
 
         // Provide input if needed
         if (inputProvider != null) {
-            try (PrintWriter writer = new PrintWriter(process.getOutputStream())) {
+            try {
+                // Don't use try-with-resources here to avoid closing the OutputStream
+                // Closing stdin prematurely causes issues on Windows with avdmanager.bat
+                PrintWriter writer = new PrintWriter(process.getOutputStream());
                 inputProvider.accept(writer);
                 writer.flush();
+                // Intentionally not closing the writer - the process needs stdin to remain open
+            } catch (Exception e) {
+                logger.warn("Failed to provide input to process", e);
             }
         }
 
